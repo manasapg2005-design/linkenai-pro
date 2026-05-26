@@ -1,0 +1,1979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkenAI Pro - Complete Resume Editor</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .login-wrapper {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            width: 400px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .login-container h2 { text-align: center; margin-bottom: 20px; color: #667eea; }
+        .login-container input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+        .login-container button { width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        .login-container button:hover { background: linear-gradient(135deg, #5a67d8, #6a3d91); }
+        .link { margin-top: 15px; text-align: center; color: #667eea; cursor: pointer; font-size: 14px; }
+        .link:hover { text-decoration: underline; }
+        .hidden { display: none; }
+        .success { color: #28a745; text-align: center; margin-top: 10px; font-size: 14px; }
+        .error { color: #dc3545; text-align: center; margin-top: 10px; font-size: 14px; }
+        
+        .main-app { display: none; }
+        .app-container { display: flex; min-height: 100vh; }
+        
+        .sidebar {
+            width: 280px; background: rgba(10, 10, 10, 0.95); backdrop-filter: blur(10px);
+            color: white; display: flex; flex-direction: column; position: fixed;
+            height: 100vh; overflow-y: auto; left: 0; top: 0; z-index: 100;
+        }
+        .sidebar-header { padding: 25px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .sidebar-header h2 { font-size: 24px; margin-bottom: 5px; }
+        .sidebar-header p { font-size: 11px; opacity: 0.7; }
+        .nav-menu { flex: 1; padding: 20px 0; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 20px; margin: 5px 15px; border-radius: 12px; cursor: pointer; transition: all 0.3s; color: rgba(255,255,255,0.7); }
+        .nav-item:hover, .nav-item.active { background: rgba(102,126,234,0.3); color: white; }
+        .nav-item span:first-child { font-size: 22px; }
+        .sidebar-footer { padding: 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+        .logout-btn { width: 100%; padding: 10px; background: rgba(220,53,69,0.8); color: white; border: none; border-radius: 8px; cursor: pointer; }
+        .role-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; margin-left: 10px; }
+        .role-user { background: #28a745; color: white; }
+        .role-admin { background: #dc3545; color: white; }
+        
+        .main-content { margin-left: 280px; flex: 1; padding: 20px; }
+        .card { background: white; border-radius: 20px; padding: 30px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .page-container { display: none; }
+        .page-container.active { display: block; }
+        h2 { color: #667eea; margin-bottom: 20px; }
+        h3 { color: #667eea; margin: 15px 0 10px 0; }
+        
+        .upload-area { border: 2px dashed #667eea; border-radius: 15px; padding: 30px; text-align: center; cursor: pointer; margin-bottom: 20px; background: #f8f9ff; }
+        .upload-area:hover { background: #f0f0ff; border-color: #764ba2; }
+        
+        input, textarea, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 10px; font-size: 14px; }
+        
+        button { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 12px 24px; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: 10px; transition: transform 0.2s; }
+        button:hover { transform: translateY(-2px); }
+        
+        .quick-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin: 5px 0; }
+        .quick-btn { background: #f0f0ff; color: #667eea; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 12px; transition: all 0.2s; }
+        .quick-btn:hover { background: #667eea; color: white; transform: translateY(-2px); }
+        
+        .status { padding: 10px; border-radius: 8px; margin: 10px 0; display: none; }
+        .status.success { background: #28a745; color: white; display: block; }
+        .status.error { background: #dc3545; color: white; display: block; }
+        .status.info { background: #17a2b8; color: white; display: block; }
+        
+        .loading { text-align: center; padding: 20px; display: none; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .editable-list { background: #f8f9fa; padding: 15px; border-radius: 10px; margin: 10px 0; }
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; margin: 5px 0; background: white; border-radius: 8px; }
+        .list-item button { background: #dc3545; padding: 5px 10px; font-size: 12px; margin: 0; }
+        .add-btn { background: #28a745; padding: 8px 15px; font-size: 12px; margin-top: 10px; }
+        
+        .chat-container { height: 450px; overflow-y: auto; padding: 20px; background: #f8f9fa; border-radius: 15px; margin-bottom: 15px; }
+        .message { margin-bottom: 15px; padding: 10px 15px; border-radius: 18px; max-width: 80%; white-space: pre-wrap; line-height: 1.5; }
+        .user-message { background: linear-gradient(135deg, #667eea, #764ba2); color: white; margin-left: auto; text-align: right; }
+        .bot-message { background: #e9ecef; color: #333; margin-right: auto; }
+        .chat-input-area { display: flex; gap: 10px; }
+        .chat-input { flex: 1; }
+        
+        .post-output { margin-top: 15px; border-radius: 10px; display: none; }
+        
+        .doc-info-card { background: #f8f9fa; border-radius: 15px; padding: 15px; margin-bottom: 20px; border-left: 4px solid #667eea; }
+        .doc-stats { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 10px; }
+        .doc-stat { background: white; padding: 5px 12px; border-radius: 20px; font-size: 12px; }
+        .url-input-group { display: flex; gap: 10px; margin: 15px 0; }
+        .url-input-group input { flex: 1; margin: 0; }
+        .url-input-group button { margin: 0; }
+        .history-item { background: #f8f9fa; padding: 10px; margin: 8px 0; border-radius: 10px; cursor: pointer; }
+        .history-item:hover { background: #e9ecef; }
+        
+        .doc-answer-standard {
+            background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .interview-card { transition: all 0.3s ease; }
+        .question-header { transition: background 0.3s ease; }
+        .question-header:hover { background: #e9ecef !important; }
+        
+        footer { text-align: center; margin-top: 20px; padding: 20px; color: rgba(255,255,255,0.7); font-size: 12px; }
+        
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); transition: transform 0.3s; }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { margin-left: 0; }
+            .menu-btn { display: block; }
+            .chat-container .message { max-width: 95%; }
+        }
+        .menu-btn { display: none; background: #667eea; padding: 10px 15px; border-radius: 10px; margin-bottom: 15px; }
+        
+        .voice-navigator {
+            position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px;
+            background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 50%;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3); cursor: pointer; z-index: 2000;
+            display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;
+        }
+        .voice-navigator:hover { transform: scale(1.1); }
+        .voice-navigator.listening { animation: pulse 1.5s infinite; background: linear-gradient(135deg, #e74c3c, #c0392b); }
+        @keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231,76,60,0.7); } 70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(231,76,60,0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231,76,60,0); } }
+        .voice-navigator .mic-icon { font-size: 28px; color: white; }
+        
+        .voice-guide-panel {
+            position: fixed; bottom: 100px; right: 25px; width: 320px; background: white;
+            border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); z-index: 1999;
+            display: none; overflow: hidden; animation: slideIn 0.3s ease;
+        }
+        .voice-guide-panel.show { display: block; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .guide-header { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; }
+        .guide-header button { background: rgba(255,255,255,0.2); border: none; color: white; cursor: pointer; width: 25px; height: 25px; border-radius: 50%; }
+        .guide-content { padding: 15px; }
+        .guide-command { padding: 8px 0; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+        
+        .voice-toast {
+            position: fixed; bottom: 100px; right: 100px; background: rgba(0,0,0,0.85); color: white;
+            padding: 10px 20px; border-radius: 50px; font-size: 13px; z-index: 1998;
+            display: none; align-items: center; gap: 10px; backdrop-filter: blur(10px);
+        }
+        .voice-toast.show { display: flex; }
+        .voice-toast .wave { display: flex; gap: 3px; align-items: center; }
+        .voice-toast .wave span { width: 4px; height: 4px; background: #4CAF50; border-radius: 2px; animation: waveAnim 1s infinite ease-in-out; }
+        @keyframes waveAnim { 0%, 100% { height: 4px; } 50% { height: 12px; } }
+        
+        .typing { display: flex; gap: 5px; padding: 5px 0; }
+        .typing span { width: 8px; height: 8px; border-radius: 50%; background: #999; animation: typingBounce 1.4s infinite ease-in-out; }
+        @keyframes typingBounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+        
+        .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
+        .form-row > div { flex: 1; }
+        
+        .chat-wrapper {
+            display: flex;
+            gap: 20px;
+        }
+        .chat-main {
+            flex: 2;
+        }
+        .chat-info-panel {
+            flex: 1;
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .info-section {
+            margin-bottom: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 12px;
+        }
+        .info-section-title {
+            font-size: 13px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+        .info-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .info-tag {
+            background: #e8eaf6;
+            color: #667eea;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .info-tag:hover {
+            background: #667eea;
+            color: white;
+        }
+        .info-tip {
+            font-size: 11px;
+            color: #888;
+            margin-top: 5px;
+        }
+        
+        /* Admin Dashboard Styles */
+        .admin-toggle-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 1500;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+        }
+        .admin-toggle-btn:hover {
+            transform: scale(1.1);
+        }
+        .admin-toggle-btn.show {
+            display: flex;
+        }
+        .admin-dashboard {
+            position: fixed;
+            top: 0;
+            right: -450px;
+            width: 450px;
+            height: 100vh;
+            background: white;
+            box-shadow: -5px 0 30px rgba(0,0,0,0.2);
+            z-index: 1500;
+            transition: right 0.3s ease;
+            overflow-y: auto;
+        }
+        .admin-dashboard.open {
+            right: 0;
+        }
+        .admin-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .admin-header h3 {
+            margin: 0;
+        }
+        .admin-header button {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+        }
+        .admin-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+            flex-wrap: wrap;
+        }
+        .admin-tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.3s;
+            color: #666;
+        }
+        .admin-tab:hover {
+            background: #e8eaf6;
+        }
+        .admin-tab.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 2px solid #667eea;
+        }
+        .admin-content {
+            display: none;
+            padding: 20px;
+        }
+        .admin-content.active {
+            display: block;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #f8f9fa, #fff);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid #e8e8e8;
+        }
+        .stat-card span {
+            font-size: 28px;
+            font-weight: bold;
+            display: block;
+            color: #667eea;
+        }
+        .stat-card label {
+            font-size: 11px;
+            color: #888;
+            margin-top: 5px;
+            display: block;
+        }
+        .session-item {
+            background: #f8f9fa;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 8px;
+            font-size: 11px;
+        }
+        .session-time {
+            color: #667eea;
+            font-weight: bold;
+        }
+        .chart-container {
+            margin: 20px 0;
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid #e8e8e8;
+        }
+        .chart-container h4 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        .report-btn {
+            width: 100%;
+            padding: 10px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            margin-top: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .delete-all-btn {
+            background: #dc3545;
+        }
+        
+        @media (max-width: 768px) {
+            .chat-wrapper {
+                flex-direction: column;
+            }
+            .chat-info-panel {
+                position: static;
+            }
+            .admin-dashboard {
+                width: 100%;
+                right: -100%;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+</head>
+<body>
+    <div class="login-wrapper" id="loginWrapper">
+        <div class="login-container">
+            <div id="registerPage">
+                <h2>User Registration</h2>
+                <input type="text" id="regUsername" placeholder="Username">
+                <input type="text" id="regPhone" placeholder="Contact Number">
+                <input type="email" id="regEmail" placeholder="Email ID">
+                <input type="password" id="regPassword" placeholder="Password">
+                <button onclick="registerUser()">Register</button>
+                <div class="link" onclick="showUserLogin()">Already Registered? Login</div>
+                <div class="link" onclick="showAdminLoginPrompt()">👑 Admin Login</div>
+                <p id="registerMsg"></p>
+            </div>
+            <div id="userLoginPage" class="hidden">
+                <h2>User Login</h2>
+                <input type="text" id="userLoginUsername" placeholder="Username">
+                <input type="password" id="userLoginPassword" placeholder="Password">
+                <button onclick="loginUser()">Login</button>
+                <div class="link" onclick="showRegister()">New User? Register</div>
+                <div class="link" onclick="showAdminLoginPrompt()">👑 Admin Login</div>
+                <p id="userLoginMsg"></p>
+            </div>
+            <div id="adminLoginPage" class="hidden">
+                <h2>👑 Admin Login</h2>
+                <input type="text" id="adminUsername" placeholder="Admin Username">
+                <input type="password" id="adminPassword" placeholder="Admin Password">
+                <button onclick="loginAdmin()">Login as Admin</button>
+                <div class="link" onclick="showUserLogin()">← Back to User Login</div>
+                <p id="adminLoginMsg"></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="mainApp" class="main-app">
+        <div class="app-container">
+            <div class="sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    <h2>✨ LinkenAI</h2>
+                    <p>Career Assistant</p>
+                </div>
+                <div class="nav-menu">
+                    <div class="nav-item active" data-page="objective" onclick="showPage('objective')"><span>🎯</span><span>Resume Editor</span></div>
+                    <div class="nav-item" data-page="chat" onclick="showPage('chat')"><span>🤖</span><span>AI Assistant</span></div>
+                    <div class="nav-item" data-page="post" onclick="showPage('post')"><span>📝</span><span>Post Generator</span></div>
+                    <div class="nav-item" data-page="document" onclick="showPage('document')"><span>📄</span><span>Document Analysis</span></div>
+                    <div class="nav-item" data-page="comment" onclick="showPage('comment')"><span>💬</span><span>Comment Analyzer</span></div>
+                    <div class="nav-item" data-page="jd" onclick="showPage('jd')"><span>📋</span><span>JD Generator</span></div>
+                    <div class="nav-item" data-page="interview" onclick="showPage('interview')"><span>🎤</span><span>Interview Q&A</span></div>
+                    <div class="nav-item" data-page="ats" onclick="showPage('ats')"><span>📊</span><span>ATS Score</span></div>
+                </div>
+                <div class="sidebar-footer">
+                    <div class="user-info">
+                        <span>👤 <span id="currentUser">User</span></span>
+                        <span id="userRoleBadge" class="role-badge role-user">User</span>
+                    </div>
+                    <button class="logout-btn" onclick="doLogout()">Logout</button>
+                </div>
+            </div>
+            
+            <button class="menu-btn" onclick="toggleSidebar()">☰ Menu</button>
+            
+            <div class="main-content">
+                <!-- Resume Editor Page -->
+                <div id="objectivePage" class="page-container active">
+                    <div class="card">
+                        <h2>🎯 Complete Resume Editor</h2>
+                        <p style="margin-bottom: 15px; color: #666;">Upload your resume to auto-fill OR edit everything manually below</p>
+                        <div class="upload-area" onclick="document.getElementById('resumeFile').click()">
+                            📄 Click to Upload Resume PDF (Auto-fill your info)
+                            <input type="file" id="resumeFile" accept=".pdf" style="display:none">
+                        </div>
+                        <div id="uploadStatus" class="status"></div>
+                        <h3>📌 Personal Information</h3>
+                        <div class="form-row"><div><label>Full Name</label><input type="text" id="userName" placeholder="Your Name"></div><div><label>Email</label><input type="email" id="userEmail" placeholder="Email"></div></div>
+                        <div class="form-row"><div><label>Phone</label><input type="text" id="userPhone" placeholder="Phone"></div><div><label>Location</label><input type="text" id="userLocation" placeholder="Location"></div></div>
+                        <h3>💼 Desired Job Role</h3>
+                        <input type="text" id="roleInput" placeholder="e.g., Software Developer, Project Manager...">
+                        <div class="quick-buttons"><span class="quick-btn" onclick="setRole('Software Developer')">💻 Developer</span><span class="quick-btn" onclick="setRole('Data Analyst')">📊 Analyst</span><span class="quick-btn" onclick="setRole('Project Manager')">📋 Manager</span><span class="quick-btn" onclick="setRole('Technical Lead')">⚡ Tech Lead</span></div>
+                        <h3>🎯 Objective Type</h3>
+                        <div class="quick-buttons"><span class="quick-btn" onclick="selectObjectiveType('technical')">💻 Technical</span><span class="quick-btn" onclick="selectObjectiveType('management')">📊 Management</span><span class="quick-btn" onclick="selectObjectiveType('hybrid')">⚡ Hybrid</span></div>
+                        <div id="selectedTypeDisplay" style="margin: 10px 0; padding: 8px; background: #f0f0ff; border-radius: 8px; display: none;">Selected: <strong id="selectedTypeText">Technical</strong></div>
+                        <button onclick="generateObjective()">✨ Generate Professional Objective</button>
+                        <div id="loading" class="loading"><div class="spinner"></div><p>Generating...</p></div>
+                        <h3>📝 Professional Objective</h3>
+                        <textarea id="editableObjective" rows="4" placeholder="Your professional objective will appear here..."></textarea>
+                        <div class="form-row"><div><h3>🎨 Color Theme</h3><select id="colorTheme"><option value="professional_blue">Professional Blue</option><option value="corporate_navy">Corporate Navy</option><option value="elegant_green">Elegant Green</option><option value="warm_orange">Warm Orange</option><option value="royal_purple">Royal Purple</option><option value="modern_red">Modern Red</option><option value="charcoal_gray">Charcoal Gray</option><option value="teal_modern">Teal Modern</option></select></div><div><h3>🖼️ Border Style</h3><select id="borderStyle"><option value="double">Double Border</option><option value="single">Single Border</option><option value="none">No Border</option></select></div></div>
+                        <h3>💻 Technical Skills</h3>
+                        <div class="editable-list"><div id="skillsContainer"></div><input type="text" id="newSkill" placeholder="Add new skill..." style="margin-top: 10px;"><button class="add-btn" onclick="addSkill()">+ Add Skill</button></div>
+                        <h3>🎓 Education</h3>
+                        <div class="editable-list"><div id="educationContainer"></div><input type="text" id="newEducation" placeholder="Add education..." style="margin-top: 10px;"><button class="add-btn" onclick="addEducation()">+ Add Education</button></div>
+                        <h3>🚀 Projects</h3>
+                        <div class="editable-list"><div id="projectsContainer"></div><input type="text" id="newProject" placeholder="Add project..." style="margin-top: 10px;"><button class="add-btn" onclick="addProject()">+ Add Project</button></div>
+                        <h3>🏆 Certifications</h3>
+                        <div class="editable-list"><div id="certificationsContainer"></div><input type="text" id="newCert" placeholder="Add certification..." style="margin-top: 10px;"><button class="add-btn" onclick="addCertification()">+ Add Certification</button></div>
+                        <h3>🌟 Soft Skills</h3>
+                        <div class="editable-list"><div id="softSkillsContainer"></div><input type="text" id="newSoftSkill" placeholder="Add soft skill..." style="margin-top: 10px;"><button class="add-btn" onclick="addSoftSkill()">+ Add Soft Skill</button></div>
+                        <div style="margin-top: 20px;"><button id="downloadPdfBtn" onclick="downloadUpdatedPDF()" style="background: #28a745; width: 100%;">📑 Download Resume PDF</button></div>
+                    </div>
+                </div>
+                
+                <!-- Chat Page -->
+                <div id="chatPage" class="page-container">
+                    <div class="card">
+                        <h2>🤖 AI Career Assistant</h2>
+                        <div class="chat-wrapper">
+                            <div class="chat-main">
+                                <div class="chat-container" id="chatMessages">
+                                    <div class="message bot-message">👋 Hello! I'm your AI Career Assistant.<br><br>🎓 <strong>I can help you with:</strong><br>• Career guidance for BCA, MCA, BBA, BCom, BTech<br>• Internship opportunities at top companies (Google, Microsoft, Amazon, Meta)<br>• Resume writing tips and ATS optimization<br>• Interview preparation with sample questions<br>• Skill development and certification recommendations<br>• Project ideas for your portfolio<br>• Salary negotiation strategies<br>• LinkedIn profile optimization<br><br>💡 <strong>Try asking me:</strong> "BCA career path", "How to prepare for Google interview", "Best Python certifications", or "Resume tips for freshers"<br><br>What would you like help with today? 🚀</div>
+                                </div>
+                                <div class="chat-input-area">
+                                    <input type="text" id="chatInput" class="chat-input" placeholder="Ask me about career guidance, internships, skills, interview prep..." onkeypress="if(event.key==='Enter') sendMessage()">
+                                    <button onclick="sendMessage()">Send</button>
+                                </div>
+                            </div>
+                            <div class="chat-info-panel">
+                                <h4 style="color: #667eea; margin-bottom: 15px;">📚 Quick Topics</h4>
+                                <div class="info-section"><div class="info-section-title">🎓 Course Guidance</div><div class="info-tags"><span class="info-tag" onclick="sendQuickMsg('BCA complete career guidance')">BCA Guidance</span><span class="info-tag" onclick="sendQuickMsg('MCA career opportunities and scope')">MCA Guidance</span><span class="info-tag" onclick="sendQuickMsg('BBA career path and placements')">BBA Guidance</span><span class="info-tag" onclick="sendQuickMsg('BCom best career options')">BCom Guidance</span><span class="info-tag" onclick="sendQuickMsg('BTech CSE career roadmap')">BTech Guidance</span></div><div class="info-tip">💡 Ask about specific courses, subjects, or career paths</div></div>
+                                <div class="info-section"><div class="info-section-title">🏢 Top Company Internships</div><div class="info-tags"><span class="info-tag" onclick="sendQuickMsg('Google internship process and tips')">Google</span><span class="info-tag" onclick="sendQuickMsg('Microsoft internship preparation')">Microsoft</span><span class="info-tag" onclick="sendQuickMsg('Amazon internship interview tips')">Amazon</span><span class="info-tag" onclick="sendQuickMsg('Meta internship requirements')">Meta</span><span class="info-tag" onclick="sendQuickMsg('Apple internship details')">Apple</span><span class="info-tag" onclick="sendQuickMsg('Netflix internship')">Netflix</span></div><div class="info-tip">💡 Get company-specific internship preparation tips</div></div>
+                                <div class="info-section"><div class="info-section-title">📄 Career Development</div><div class="info-tags"><span class="info-tag" onclick="sendQuickMsg('professional resume writing tips')">Resume Tips</span><span class="info-tag" onclick="sendQuickMsg('common interview questions and answers')">Interview Tips</span><span class="info-tag" onclick="sendQuickMsg('LinkedIn profile optimization guide')">LinkedIn Tips</span><span class="info-tag" onclick="sendQuickMsg('salary negotiation strategies')">Salary Tips</span><span class="info-tag" onclick="sendQuickMsg('networking strategies for jobs')">Networking</span><span class="info-tag" onclick="sendQuickMsg('personal branding tips')">Personal Branding</span></div></div>
+                                <div class="info-section"><div class="info-section-title">📚 Skills & Certifications</div><div class="info-tags"><span class="info-tag" onclick="sendQuickMsg('in-demand technical skills 2026')">Tech Skills</span><span class="info-tag" onclick="sendQuickMsg('best programming languages to learn')">Programming</span><span class="info-tag" onclick="sendQuickMsg('cloud computing certifications')">Cloud Certs</span><span class="info-tag" onclick="sendQuickMsg('data science certifications')">Data Science</span><span class="info-tag" onclick="sendQuickMsg('AI ML certifications')">AI/ML</span><span class="info-tag" onclick="sendQuickMsg('project management certifications')">PM Certs</span></div></div>
+                                <div class="info-section"><div class="info-section-title">💼 Project Ideas</div><div class="info-tags"><span class="info-tag" onclick="sendQuickMsg('web development project ideas for resume')">Web Dev</span><span class="info-tag" onclick="sendQuickMsg('AI ML project ideas for students')">AI/ML</span><span class="info-tag" onclick="sendQuickMsg('mobile app project ideas')">Mobile Apps</span><span class="info-tag" onclick="sendQuickMsg('data science portfolio projects')">Data Science</span><span class="info-tag" onclick="sendQuickMsg('cloud computing projects')">Cloud</span></div></div>
+                                <div class="info-section"><div class="info-section-title">💰 Salary Information</div><div class="info-tags"><span class="info-tag" onclick="sendQuickMsg('fresher software developer salary India')">Fresher Salary</span><span class="info-tag" onclick="sendQuickMsg('experienced software engineer salary')">Experienced</span><span class="info-tag" onclick="sendQuickMsg('FAANG company salary comparison')">FAANG Salary</span><span class="info-tag" onclick="sendQuickMsg('remote job salary trends')">Remote Jobs</span></div></div>
+                                <div class="info-section"><div class="info-section-title">🎯 Interview Preparation</div><div class="info-tags"><span class="info-tag" onclick="sendQuickMsg('coding interview preparation guide')">Coding Prep</span><span class="info-tag" onclick="sendQuickMsg('system design interview tips')">System Design</span><span class="info-tag" onclick="sendQuickMsg('HR interview questions and answers')">HR Round</span><span class="info-tag" onclick="sendQuickMsg('technical interview tips')">Technical</span><span class="info-tag" onclick="sendQuickMsg('behavioral interview STAR method')">Behavioral</span></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Post Generator Page -->
+                <div id="postPage" class="page-container">
+                    <div class="card">
+                        <h2>📝 LinkedIn Post Generator</h2>
+                        <p style="margin-bottom: 15px; color: #666;">Generate professional, engaging LinkedIn posts in different tones</p>
+                        <div class="quick-buttons">
+                            <span class="quick-btn" onclick="selectTone('professional')">💼 Professional</span>
+                            <span class="quick-btn" onclick="selectTone('casual')">💬 Casual</span>
+                            <span class="quick-btn" onclick="selectTone('inspirational')">✨ Inspirational</span>
+                        </div>
+                        <input type="text" id="postTopic" placeholder="Enter topic (e.g., AI in Business, Leadership Tips, Career Growth)...">
+                        <button id="generatePostBtn" onclick="generatePost()" disabled>✨ Generate Post</button>
+                        <div id="postOutput" class="post-output"></div>
+                    </div>
+                </div>
+                
+                <!-- Document Analysis Page -->
+                <div id="documentPage" class="page-container">
+                    <div class="card">
+                        <h2>📄 Document Analysis</h2>
+                        <p style="margin-bottom: 15px; color: #666;">Upload a PDF or enter URL to analyze and ask questions</p>
+                        <div class="upload-area" onclick="document.getElementById('docUpload').click()">
+                            📁 Click to Upload PDF for Analysis
+                            <input type="file" id="docUpload" accept=".pdf" style="display:none">
+                        </div>
+                        <div class="url-input-group">
+                            <input type="text" id="urlInput" placeholder="Or enter URL to analyze (e.g., https://example.com)...">
+                            <button onclick="loadURL()">🌐 Load URL</button>
+                        </div>
+                        <div id="docStatus" class="status"></div>
+                        <div id="docInfoCard" class="doc-info-card" style="display: none;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                                <strong>📄 Current Document</strong>
+                                <div style="display: flex; gap: 10px;">
+                                    <button onclick="deleteDocument()" style="background: #dc3545; padding: 5px 15px; font-size: 12px;">🗑️ Delete</button>
+                                    <button onclick="refreshDocument()" style="background: #17a2b8; padding: 5px 15px; font-size: 12px;">🔄 Refresh</button>
+                                </div>
+                            </div>
+                            <p id="docName" style="margin: 10px 0; word-break: break-all;"></p>
+                            <div class="doc-stats">
+                                <span class="doc-stat">📄 Pages: <span id="docPages">-</span></span>
+                                <span class="doc-stat">📝 Words: <span id="docWords">-</span></span>
+                                <span class="doc-stat">⏱️ Reading: <span id="docReadingTime">-</span> min</span>
+                            </div>
+                        </div>
+                        <div id="docQA" style="display: none; margin-top: 20px;">
+                            <h4>💬 Ask Questions About This Document</h4>
+                            <div style="display: flex; gap: 10px; margin: 15px 0;">
+                                <input type="text" id="docQuestion" placeholder="Ask a question..." style="flex:1;" onkeypress="if(event.key==='Enter') askDocument()">
+                                <button onclick="askDocument()">Ask</button>
+                                <button onclick="clearHistory()" style="background: #6c757d;">🗑️ Clear History</button>
+                            </div>
+                            <div class="quick-buttons">
+                                <span class="quick-btn" onclick="askSuggested('What is the main topic?')">📌 Main Topic</span>
+                                <span class="quick-btn" onclick="askSuggested('Summarize this document')">📋 Summary</span>
+                                <span class="quick-btn" onclick="askSuggested('What are the key points?')">🔑 Key Points</span>
+                                <span class="quick-btn" onclick="askSuggested('Who is the author?')">✍️ Author</span>
+                                <span class="quick-btn" onclick="askSuggested('What is the conclusion?')">🎯 Conclusion</span>
+                            </div>
+                            <div id="docAnswer" class="doc-answer-standard" style="display: none;"></div>
+                            <div id="historyBox" style="display: none; margin-top: 20px;">
+                                <h4>📜 Question History</h4>
+                                <div id="historyList"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Comment Analyzer Page -->
+                <div id="commentPage" class="page-container">
+                    <div class="card">
+                        <h2>💬 Comment Analyzer</h2>
+                        <textarea id="commentInput" rows="4" placeholder="Paste a comment here..."></textarea>
+                        <button onclick="analyzeComment()">🔍 Analyze</button>
+                        <div id="commentResult" class="status" style="display: none;"></div>
+                    </div>
+                </div>
+                
+                <!-- JD Generator Page -->
+                <div id="jdPage" class="page-container">
+                    <div class="card">
+                        <h2>📋 Job Description PDF Generator</h2>
+                        <input type="text" id="jdCompany" placeholder="Company" value="ABC Technologies">
+                        <input type="text" id="jdPosition" placeholder="Position" value="Software Developer">
+                        <input type="text" id="jdLocation" placeholder="Location" value="Bangalore">
+                        <input type="text" id="jdSalary" placeholder="Salary" value="₹8L - ₹15L">
+                        <textarea id="jdDescription" rows="6" placeholder="Job Description..."></textarea>
+                        <button onclick="generateJDPDF()">📥 Generate PDF</button>
+                    </div>
+                </div>
+                
+                <!-- Interview Page -->
+                <div id="interviewPage" class="page-container">
+                    <div class="card">
+                        <h2>🎤 Interview Question Bank</h2>
+                        <p style="margin-bottom: 15px; color: #666;">Prepare for interviews with 100+ role-specific, company-specific, behavioral, and technical questions with detailed answers</p>
+                        <div class="quick-buttons" style="margin-bottom: 20px;">
+                            <span class="quick-btn" onclick="loadInterviewQuestions('role', 'developer')" style="background: #667eea; color: white;">💻 Role Specific</span>
+                            <span class="quick-btn" onclick="loadInterviewQuestions('company', 'google')">🏢 Company Specific</span>
+                            <span class="quick-btn" onclick="loadInterviewQuestions('behavioral', '')">💬 Behavioral (STAR)</span>
+                            <span class="quick-btn" onclick="loadInterviewQuestions('technical', 'python')">🔧 Technical</span>
+                            <span class="quick-btn" onclick="loadInterviewQuestions('hr', '')">👔 HR Round</span>
+                            <span class="quick-btn" onclick="loadInterviewQuestions('fresher', '')">🎓 Fresher Questions</span>
+                        </div>
+                        <div id="subcategorySelector" style="margin-bottom: 15px; display: none;">
+                            <label style="font-weight: bold;">Select Category:</label>
+                            <div class="quick-buttons" id="subcategoryButtons"></div>
+                        </div>
+                        <div id="questionsContainer" style="margin-top: 20px;">
+                            <div class="loading" id="questionsLoading" style="display: none;"><div class="spinner"></div><p>Loading questions...</p></div>
+                            <div id="questionsList"></div>
+                        </div>
+                        <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                            <h4>💡 Interview Tips</h4>
+                            <ul style="margin-left: 20px; color: #666;">
+                                <li>Research the company thoroughly before the interview - know their products, culture, and recent news</li>
+                                <li>Practice answering out loud, not just in your head - record yourself or practice with a friend</li>
+                                <li>Use the STAR method (Situation, Task, Action, Result) for behavioral questions</li>
+                                <li>Prepare 3-5 thoughtful questions to ask the interviewer about role, team, or company</li>
+                                <li>Send a personalized thank you email within 24 hours after the interview</li>
+                                <li>Review your resume and be ready to explain any gaps or transitions</li>
+                                <li>Prepare a 60-second "Tell me about yourself" elevator pitch</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- ATS Score Page -->
+                <div id="atsPage" class="page-container">
+                    <div class="card">
+                        <h2>📊 ATS Resume Score Checker</h2>
+                        <p style="margin-bottom: 15px; color: #666;">Upload your resume to get an accurate ATS compatibility score with detailed analysis</p>
+                        
+                        <div class="upload-area" onclick="document.getElementById('atsFile').click()">
+                            📄 Click to Upload Resume for ATS Analysis
+                            <input type="file" id="atsFile" accept=".pdf,.txt,.md" style="display:none">
+                        </div>
+                        
+                        <div id="atsStatus" class="status"></div>
+                        
+                        <div id="atsResult" style="display: none; margin-top: 20px;">
+                            <!-- Score Circle -->
+                            <div style="text-align: center; margin-bottom: 30px;">
+                                <div style="position: relative; display: inline-block;">
+                                    <svg width="180" height="180" viewBox="0 0 180 180">
+                                        <circle cx="90" cy="90" r="80" fill="none" stroke="#e0e0e0" stroke-width="12"/>
+                                        <circle id="atsScoreCircle" cx="90" cy="90" r="80" fill="none" stroke="#28a745" stroke-width="12" stroke-dasharray="502" stroke-dashoffset="502" transform="rotate(-90 90 90)"/>
+                                        <text x="90" y="100" text-anchor="middle" font-size="36" font-weight="bold" fill="#333" id="atsScoreText">0</text>
+                                        <text x="90" y="120" text-anchor="middle" font-size="14" fill="#666">/100</text>
+                                    </svg>
+                                </div>
+                                <div id="atsRating" style="margin-top: 10px;"><span id="atsRatingBadge" style="display: inline-block; padding: 8px 20px; border-radius: 25px; font-weight: bold;"></span></div>
+                                <p id="atsRatingMessage" style="margin-top: 10px; color: #666;"></p>
+                            </div>
+                            
+                            <!-- Quick Stats -->
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                                <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; text-align: center;">
+                                    <div style="font-size: 28px; font-weight: bold; color: #667eea;" id="statWords">0</div>
+                                    <div style="font-size: 12px; color: #666;">Total Words</div>
+                                </div>
+                                <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; text-align: center;">
+                                    <div style="font-size: 28px; font-weight: bold; color: #667eea;" id="statSkills">0</div>
+                                    <div style="font-size: 12px; color: #666;">Keywords Found</div>
+                                </div>
+                                <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; text-align: center;">
+                                    <div style="font-size: 28px; font-weight: bold; color: #667eea;" id="statVerbs">0</div>
+                                    <div style="font-size: 12px; color: #666;">Action Verbs</div>
+                                </div>
+                                <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; text-align: center;">
+                                    <div style="font-size: 28px; font-weight: bold; color: #667eea;" id="statSections">0</div>
+                                    <div style="font-size: 12px; color: #666;">Sections Found</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Detailed Results Container -->
+                            <div id="atsDetailedResults"></div>
+                        </div>
+                    </div>
+                </div>
+                <footer>LinkenAI Pro | Complete Resume Editor | Voice Navigator Active</footer>
+            </div>
+        </div>
+        
+        <!-- ADMIN DASHBOARD BUTTON -->
+        <button id="adminToggleBtn" class="admin-toggle-btn" onclick="toggleAdminDashboard()">👑</button>
+
+        <!-- ADMIN DASHBOARD PANEL -->
+        <div id="adminDashboard" class="admin-dashboard">
+            <div class="admin-header">
+                <h3>👑 Admin Dashboard</h3>
+                <button onclick="toggleAdminDashboard()">✕</button>
+            </div>
+            <div class="admin-tabs">
+                <div class="admin-tab active" data-tab="overview" onclick="switchAdminTab('overview')">📊 Overview</div>
+                <div class="admin-tab" data-tab="sessions" onclick="switchAdminTab('sessions')">📋 Sessions</div>
+                <div class="admin-tab" data-tab="charts" onclick="switchAdminTab('charts')">📉 Charts</div>
+            </div>
+            
+            <div id="overviewAdmin" class="admin-content active">
+                <div class="stats-grid">
+                    <div class="stat-card"><span id="totalUsers">0</span><label>Total Users</label></div>
+                    <div class="stat-card"><span id="activeSessions">0</span><label>Active Now</label></div>
+                    <div class="stat-card"><span id="totalLogins">0</span><label>Total Logins</label></div>
+                    <div class="stat-card"><span id="avgDuration">0</span><label>Avg Session (min)</label></div>
+                    <div class="stat-card"><span id="totalPageViews">0</span><label>Page Views</label></div>
+                    <div class="stat-card"><span id="uniqueVisitors">0</span><label>Unique Visitors</label></div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                    <div class="chart-container"><h4>📊 Today's Activity</h4><canvas id="todayActivityChart" height="120"></canvas></div>
+                    <div class="chart-container"><h4>📈 Weekly Trend</h4><canvas id="weeklyTrendMini" height="120"></canvas></div>
+                </div>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+                    <h4 style="color: #667eea; margin-bottom: 10px;">📋 Quick Actions</h4>
+                    <button class="report-btn" onclick="exportFullReport()">📊 Export Report (CSV)</button>
+                    <button class="report-btn delete-all-btn" onclick="clearAllAdminData()" style="margin-top: 10px;">🗑️ Clear Data</button>
+                </div>
+                <div><h4 style="color: #667eea; margin-bottom: 10px;">🕐 Recent Activity</h4><div id="recentActivityList"></div></div>
+            </div>
+            
+            <div id="sessionsAdmin" class="admin-content">
+                <div style="margin-bottom: 15px;"><input type="text" id="sessionSearch" placeholder="🔍 Search by username..." onkeyup="filterSessions()" style="padding: 8px; width: 100%;"></div>
+                <div id="sessionsList"></div>
+            </div>
+            
+            <div id="chartsAdmin" class="admin-content">
+                <div class="chart-container"><h4>📊 Daily Login Activity</h4><canvas id="dailyActivityChart" height="200"></canvas></div>
+                <div class="chart-container"><h4>📈 Login Trends</h4><canvas id="loginTrendChart" height="200"></canvas></div>
+                <div class="chart-container"><h4>⏱️ Session Duration Distribution</h4><canvas id="durationDistChart" height="200"></canvas></div>
+                <div class="chart-container"><h4>👥 User Distribution</h4><canvas id="userDistributionChart" height="200"></canvas></div>
+                <div class="chart-container"><h4>📄 Page Views Distribution</h4><canvas id="pageViewDistChart" height="200"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="voiceNavigator" class="voice-navigator"><div class="mic-icon">🎤</div></div>
+    <div id="voiceGuidePanel" class="voice-guide-panel">
+        <div class="guide-header"><h4>🎤 Voice Commands</h4><button onclick="closeVoiceGuide()">✕</button></div>
+        <div class="guide-content">
+            <div class="guide-command" onclick="navigateAndSpeak('objective')"><span>🎯</span><span>Resume Editor</span></div>
+            <div class="guide-command" onclick="navigateAndSpeak('chat')"><span>🤖</span><span>AI Assistant</span></div>
+            <div class="guide-command" onclick="navigateAndSpeak('post')"><span>📝</span><span>Post Generator</span></div>
+            <div class="guide-command" onclick="navigateAndSpeak('document')"><span>📄</span><span>Document Analysis</span></div>
+            <div class="guide-command" onclick="navigateAndSpeak('comment')"><span>💬</span><span>Comment Analyzer</span></div>
+            <div class="guide-command" onclick="navigateAndSpeak('jd')"><span>📋</span><span>JD Generator</span></div>
+            <div class="guide-command" onclick="navigateAndSpeak('interview')"><span>🎤</span><span>Interview Q&A</span></div>
+            <div class="guide-command" onclick="navigateAndSpeak('ats')"><span>📊</span><span>ATS Score</span></div>
+        </div>
+    </div>
+    <div id="voiceToast" class="voice-toast"><div class="wave"><span></span><span></span><span></span><span></span><span></span></div><span id="voiceStatusText">Listening...</span></div>
+
+    <script>
+        // Configure PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+        
+        // ============ AUTHENTICATION ==========
+        let currentUsername = null;
+        let isAdminMode = false;
+
+        function hideAllPages() {
+            document.getElementById("registerPage").classList.add("hidden");
+            document.getElementById("userLoginPage").classList.add("hidden");
+            document.getElementById("adminLoginPage").classList.add("hidden");
+        }
+        function showRegister() { hideAllPages(); document.getElementById("registerPage").classList.remove("hidden"); }
+        function showUserLogin() { hideAllPages(); document.getElementById("userLoginPage").classList.remove("hidden"); }
+        function showAdminLoginPrompt() { hideAllPages(); document.getElementById("adminLoginPage").classList.remove("hidden"); }
+
+        function registerUser() {
+            const username = document.getElementById("regUsername").value;
+            const phone = document.getElementById("regPhone").value;
+            const email = document.getElementById("regEmail").value;
+            const password = document.getElementById("regPassword").value;
+            if(username === "" || phone === "" || email === "" || password === "") {
+                document.getElementById("registerMsg").innerHTML = "<span class='error'>Fill all fields</span>";
+                return;
+            }
+            
+            fetch('/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, phone, email, password })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    document.getElementById("registerMsg").innerHTML = "<span class='success'>User Registered Successfully! Please login.</span>";
+                    setTimeout(() => showUserLogin(), 1500);
+                } else {
+                    document.getElementById("registerMsg").innerHTML = "<span class='error'>" + data.message + "</span>";
+                }
+            });
+        }
+
+        function loginUser() {
+            const username = document.getElementById("userLoginUsername").value;
+            const password = document.getElementById("userLoginPassword").value;
+            
+            fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: username, password: password })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    if(data.redirect) {
+                        window.location.href = data.redirect;
+                    } else {
+                        currentUsername = username;
+                        isAdminMode = false;
+                        document.getElementById("userLoginMsg").innerHTML = "<span class='success'>Login Successful!</span>";
+                        showMainApp();
+                    }
+                } else {
+                    document.getElementById("userLoginMsg").innerHTML = "<span class='error'>Invalid Credentials</span>";
+                }
+            });
+        }
+
+        function loginAdmin() {
+            const username = document.getElementById("adminUsername").value;
+            const password = document.getElementById("adminPassword").value;
+            
+            fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: username, password: password })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    if(data.redirect) {
+                        window.location.href = data.redirect;
+                    } else {
+                        document.getElementById("adminLoginMsg").innerHTML = "<span class='error'>Redirect failed</span>";
+                    }
+                } else {
+                    document.getElementById("adminLoginMsg").innerHTML = "<span class='error'>Invalid Admin Credentials (use admin/admin123)</span>";
+                }
+            });
+        }
+
+        // Admin tracking variables
+        let sessionData = JSON.parse(localStorage.getItem('sessionData')) || [];
+        let activityLog = JSON.parse(localStorage.getItem('activityLog')) || [];
+        let pageViewsData = JSON.parse(localStorage.getItem('pageViewsData')) || {
+            'objective': 0, 'chat': 0, 'post': 0, 'document': 0, 'comment': 0, 'jd': 0, 'interview': 0, 'ats': 0
+        };
+
+        function logSessionStart(user) {
+            const session = {
+                id: Date.now(),
+                username: user.username,
+                email: user.email,
+                phone: user.phone,
+                loginTime: new Date().toLocaleString(),
+                timestamp: Date.now(),
+                status: 'active'
+            };
+            sessionData.push(session);
+            localStorage.setItem('sessionData', JSON.stringify(sessionData));
+            localStorage.setItem('currentSessionId', session.id);
+        }
+
+        function logSessionEnd() {
+            const sessionId = localStorage.getItem('currentSessionId');
+            if(sessionId) {
+                const index = sessionData.findIndex(s => s.id == sessionId);
+                if(index !== -1) {
+                    sessionData[index].logoutTime = new Date().toLocaleString();
+                    sessionData[index].status = 'completed';
+                    const duration = (Date.now() - sessionData[index].timestamp) / 60000;
+                    sessionData[index].duration = Math.round(duration);
+                    localStorage.setItem('sessionData', JSON.stringify(sessionData));
+                }
+                localStorage.removeItem('currentSessionId');
+            }
+        }
+
+        function logActivity(action, username, details) {
+            activityLog.unshift({
+                id: Date.now(),
+                username: username,
+                action: action,
+                details: details,
+                timestamp: new Date().toLocaleString()
+            });
+            if(activityLog.length > 200) activityLog.pop();
+            localStorage.setItem('activityLog', JSON.stringify(activityLog));
+        }
+
+        function trackPageView(pageName) {
+            if(pageViewsData[pageName] !== undefined) {
+                pageViewsData[pageName]++;
+                localStorage.setItem('pageViewsData', JSON.stringify(pageViewsData));
+            }
+            logActivity('page_view', currentUsername, `Viewed ${pageName} page`);
+        }
+
+        function showMainApp() {
+            document.getElementById('loginWrapper').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            document.getElementById('currentUser').innerText = currentUsername;
+            if(isAdminMode || currentUsername === 'admin') {
+                document.getElementById('userRoleBadge').innerText = 'Admin';
+                document.getElementById('userRoleBadge').className = 'role-badge role-admin';
+                document.getElementById('adminToggleBtn').classList.add('show');
+            } else {
+                document.getElementById('userRoleBadge').innerText = 'User';
+                document.getElementById('userRoleBadge').className = 'role-badge role-user';
+            }
+            speakMessage('Welcome to LinkenAI Pro!');
+        }
+
+        function doLogout() {
+            logSessionEnd();
+            logActivity('logout', currentUsername, 'User logged out');
+            currentUsername = null;
+            isAdminMode = false;
+            document.getElementById('loginWrapper').style.display = 'flex';
+            document.getElementById('mainApp').style.display = 'none';
+            document.getElementById('adminToggleBtn').classList.remove('show');
+            showUserLogin();
+        }
+
+        // ============ ADMIN DASHBOARD FUNCTIONS ==========
+        function toggleAdminDashboard() {
+            if(!isAdminMode && currentUsername !== 'admin') {
+                alert('Admin access only. Please login as admin.');
+                return;
+            }
+            const dashboard = document.getElementById('adminDashboard');
+            dashboard.classList.toggle('open');
+            if(dashboard.classList.contains('open')) {
+                refreshAdminData();
+                refreshCharts();
+            }
+        }
+
+        function switchAdminTab(tabName) {
+            document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.admin-content').forEach(c => c.classList.remove('active'));
+            document.querySelector(`.admin-tab[data-tab="${tabName}"]`).classList.add('active');
+            document.getElementById(`${tabName}Admin`).classList.add('active');
+            if(tabName === 'charts') refreshCharts();
+        }
+
+        function refreshAdminData() {
+            const storedUser = JSON.parse(localStorage.getItem('userData'));
+            const totalUsers = storedUser ? 1 : 0;
+            const activeNow = sessionData.filter(s => s.status === 'active').length;
+            const totalLogins = sessionData.length;
+            const completed = sessionData.filter(s => s.duration);
+            const avgDur = completed.length ? Math.round(completed.reduce((a,b)=>a+(b.duration||0),0)/completed.length) : 0;
+            const totalViews = Object.values(pageViewsData).reduce((a,b)=>a+b,0);
+            const uniqueUsers = [...new Set(sessionData.map(s => s.username))].length;
+            
+            document.getElementById('totalUsers').innerText = totalUsers;
+            document.getElementById('activeSessions').innerText = activeNow;
+            document.getElementById('totalLogins').innerText = totalLogins;
+            document.getElementById('avgDuration').innerText = avgDur;
+            document.getElementById('totalPageViews').innerText = totalViews;
+            document.getElementById('uniqueVisitors').innerText = uniqueUsers;
+            
+            const sessionsDiv = document.getElementById('sessionsList');
+            if(sessionData.length === 0) {
+                sessionsDiv.innerHTML = '<div style="text-align:center;padding:20px;color:#999;">No sessions recorded</div>';
+            } else {
+                sessionsDiv.innerHTML = sessionData.slice().reverse().map(s => `
+                    <div class="session-item">
+                        <div><span class="session-time">👤 ${s.username}</span></div>
+                        <div>🔐 Login: ${s.loginTime}</div>
+                        ${s.logoutTime ? `<div>🚪 Logout: ${s.logoutTime}</div>` : '<div style="color:#28a745;">● Active Now</div>'}
+                        ${s.duration ? `<div>⏱️ Duration: ${s.duration} minutes</div>` : ''}
+                        <div>📧 ${s.email} | 📞 ${s.phone}</div>
+                    </div>
+                `).join('');
+            }
+            
+            const activityDiv = document.getElementById('recentActivityList');
+            if(activityLog.length === 0) {
+                activityDiv.innerHTML = '<div style="text-align:center;padding:20px;color:#999;">No activity yet</div>';
+            } else {
+                activityDiv.innerHTML = activityLog.slice(0,10).map(a => `
+                    <div class="session-item">
+                        <div><strong>${a.username}</strong> - ${a.action}</div>
+                        <div style="font-size:10px;">${a.details || ''}</div>
+                        <div style="font-size:10px;color:#888;">${a.timestamp}</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function filterSessions() {
+            const searchTerm = document.getElementById('sessionSearch')?.value.toLowerCase() || '';
+            const filtered = sessionData.filter(s => s.username.toLowerCase().includes(searchTerm));
+            const sessionsDiv = document.getElementById('sessionsList');
+            if(filtered.length === 0) {
+                sessionsDiv.innerHTML = '<div style="text-align:center;padding:20px;color:#999;">No matching sessions</div>';
+            } else {
+                sessionsDiv.innerHTML = filtered.slice().reverse().map(s => `
+                    <div class="session-item">
+                        <div><span class="session-time">👤 ${s.username}</span></div>
+                        <div>🔐 Login: ${s.loginTime}</div>
+                        ${s.logoutTime ? `<div>🚪 Logout: ${s.logoutTime}</div>` : '<div style="color:#28a745;">● Active Now</div>'}
+                        ${s.duration ? `<div>⏱️ Duration: ${s.duration} minutes</div>` : ''}
+                    </div>
+                `).join('');
+            }
+        }
+
+        function refreshCharts() {
+            const last7Days = [];
+            const loginCounts = [];
+            for(let i=6;i>=0;i--) {
+                const d = new Date();
+                d.setDate(d.getDate()-i);
+                const dateStr = d.toLocaleDateString();
+                last7Days.push(dateStr);
+                loginCounts.push(sessionData.filter(s => new Date(s.timestamp).toLocaleDateString() === dateStr).length);
+            }
+            
+            const ctxDaily = document.getElementById('dailyActivityChart')?.getContext('2d');
+            if(ctxDaily) { if(window.dailyChart) window.dailyChart.destroy(); window.dailyChart = new Chart(ctxDaily, { type: 'bar', data: { labels: last7Days, datasets: [{ label: 'Logins', data: loginCounts, backgroundColor: '#667eea', borderRadius: 8 }] }, options: { responsive: true } }); }
+            
+            const ctxTrend = document.getElementById('loginTrendChart')?.getContext('2d');
+            if(ctxTrend) { if(window.trendChart) window.trendChart.destroy(); window.trendChart = new Chart(ctxTrend, { type: 'line', data: { labels: last7Days, datasets: [{ label: 'Activity', data: loginCounts, borderColor: '#764ba2', fill: true, tension: 0.4 }] }, options: { responsive: true } }); }
+            
+            const ctxToday = document.getElementById('todayActivityChart')?.getContext('2d');
+            if(ctxToday) { if(window.todayChart) window.todayChart.destroy(); window.todayChart = new Chart(ctxToday, { type: 'bar', data: { labels: last7Days.slice(-7), datasets: [{ label: 'Logins', data: loginCounts.slice(-7), backgroundColor: '#667eea', borderRadius: 8 }] }, options: { responsive: true } }); }
+            
+            const ctxWeekly = document.getElementById('weeklyTrendMini')?.getContext('2d');
+            if(ctxWeekly) { if(window.weeklyChart) window.weeklyChart.destroy(); window.weeklyChart = new Chart(ctxWeekly, { type: 'line', data: { labels: last7Days, datasets: [{ label: 'Trend', data: loginCounts, borderColor: '#e74c3c', fill: true, tension: 0.4 }] }, options: { responsive: true } }); }
+            
+            const durationRanges = [5,15,30,45,60];
+            const durationCounts = [0,0,0,0,0];
+            sessionData.filter(s=>s.duration).forEach(s => {
+                if(s.duration <= 5) durationCounts[0]++;
+                else if(s.duration <= 15) durationCounts[1]++;
+                else if(s.duration <= 30) durationCounts[2]++;
+                else if(s.duration <= 45) durationCounts[3]++;
+                else durationCounts[4]++;
+            });
+            const ctxDuration = document.getElementById('durationDistChart')?.getContext('2d');
+            if(ctxDuration) { if(window.durationChart) window.durationChart.destroy(); window.durationChart = new Chart(ctxDuration, { type: 'bar', data: { labels: ['<5min', '5-15min', '15-30min', '30-45min', '45-60min'], datasets: [{ label: 'Sessions', data: durationCounts, backgroundColor: '#17a2b8', borderRadius: 8 }] }, options: { responsive: true } }); }
+            
+            const userRoles = { admin: isAdminMode ? 1 : 0, user: JSON.parse(localStorage.getItem('userData')) ? 1 : 0 };
+            const ctxDist = document.getElementById('userDistributionChart')?.getContext('2d');
+            if(ctxDist) { if(window.userDistChart) window.userDistChart.destroy(); window.userDistChart = new Chart(ctxDist, { type: 'pie', data: { labels: ['Admins', 'Regular Users'], datasets: [{ data: [userRoles.admin, userRoles.user], backgroundColor: ['#dc3545', '#28a745'] }] }, options: { responsive: true } }); }
+            
+            const ctxPageDist = document.getElementById('pageViewDistChart')?.getContext('2d');
+            if(ctxPageDist) { if(window.pageDistChart) window.pageDistChart.destroy(); window.pageDistChart = new Chart(ctxPageDist, { type: 'doughnut', data: { labels: Object.keys(pageViewsData).map(k => k.toUpperCase()), datasets: [{ data: Object.values(pageViewsData), backgroundColor: ['#667eea','#764ba2','#f39c12','#e74c3c','#2ecc71','#1abc9c','#3498db','#9b59b6'] }] }, options: { responsive: true } }); }
+        }
+
+        function exportFullReport() {
+            let csv = "=== SESSION REPORT ===\nUsername,Email,Phone,Login Time,Logout Time,Duration (min)\n";
+            sessionData.forEach(s => csv += `"${s.username}","${s.email}","${s.phone}","${s.loginTime}","${s.logoutTime || 'Active'}","${s.duration || '-'}"\n`);
+            csv += "\n=== ACTIVITY LOG ===\nUsername,Action,Details,Timestamp\n";
+            activityLog.forEach(a => csv += `"${a.username}","${a.action}","${a.details}","${a.timestamp}"\n`);
+            csv += "\n=== PAGE VIEWS ===\nPage,Views\n";
+            for(let [page, views] of Object.entries(pageViewsData)) csv += `"${page}",${views}\n`;
+            const blob = new Blob([csv], {type:'text/csv'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `admin_report_${new Date().toLocaleDateString()}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            alert('Report exported successfully!');
+        }
+
+        function clearAllAdminData() {
+            if(confirm('⚠️ Delete ALL session data and activity logs? This cannot be undone.')) {
+                sessionData = [];
+                activityLog = [];
+                pageViewsData = { 'objective':0, 'chat':0, 'post':0, 'document':0, 'comment':0, 'jd':0, 'interview':0, 'ats':0 };
+                localStorage.setItem('sessionData', JSON.stringify(sessionData));
+                localStorage.setItem('activityLog', JSON.stringify(activityLog));
+                localStorage.setItem('pageViewsData', JSON.stringify(pageViewsData));
+                refreshAdminData();
+                refreshCharts();
+                alert('All data cleared!');
+            }
+        }
+
+        // ============ VOICE NAVIGATOR ==========
+        let synth = window.speechSynthesis;
+        let recognition = null;
+        let isListening = false;
+        
+        const voiceBtn = document.getElementById('voiceNavigator');
+        const voiceToast = document.getElementById('voiceToast');
+        const voiceStatusText = document.getElementById('voiceStatusText');
+        const voiceGuidePanel = document.getElementById('voiceGuidePanel');
+        
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+            recognition.onstart = function() { isListening = true; voiceBtn.classList.add('listening'); voiceToast.classList.add('show'); voiceStatusText.innerHTML = '🎤 Listening...'; };
+            recognition.onend = function() { isListening = false; voiceBtn.classList.remove('listening'); setTimeout(() => voiceToast.classList.remove('show'), 1500); };
+            recognition.onresult = function(event) { const transcript = event.results[0][0].transcript.toLowerCase(); voiceStatusText.innerHTML = `You said: "${transcript}"`; setTimeout(() => voiceToast.classList.remove('show'), 2000); processVoiceCommand(transcript); };
+        }
+        
+        voiceBtn.addEventListener('click', function() { if (!recognition) { speakMessage('Voice not supported. Use Chrome, Edge, or Safari.'); return; } if (isListening) recognition.stop(); else recognition.start(); });
+        
+        function speakMessage(text) { if (synth.speaking) synth.cancel(); const utterance = new SpeechSynthesisUtterance(text); utterance.rate = 0.9; synth.speak(utterance); voiceStatusText.innerHTML = `🔊 ${text.substring(0, 50)}...`; voiceToast.classList.add('show'); setTimeout(() => voiceToast.classList.remove('show'), 4000); }
+        
+        function processVoiceCommand(command) {
+            if (command.includes('resume') || command.includes('editor')) navigateAndSpeak('objective', 'Resume Editor - Upload your resume, edit your information, and download PDF.');
+            else if (command.includes('chat') || command.includes('assistant')) navigateAndSpeak('chat', 'AI Assistant - Ask me about career guidance, internships, and interview prep.');
+            else if (command.includes('post')) navigateAndSpeak('post', 'Post Generator - Create LinkedIn posts with different tones.');
+            else if (command.includes('document')) navigateAndSpeak('document', 'Document Analysis - Upload PDF or URL to analyze content.');
+            else if (command.includes('comment')) navigateAndSpeak('comment', 'Comment Analyzer - Analyze sentiment of any comment.');
+            else if (command.includes('jd')) navigateAndSpeak('jd', 'JD Generator - Create professional job description PDFs.');
+            else if (command.includes('interview') || command.includes('questions')) navigateAndSpeak('interview', 'Interview Q&A - Practice with role-specific, company-specific, behavioral, and technical questions.');
+            else if (command.includes('ats') || command.includes('score')) navigateAndSpeak('ats', 'ATS Score Checker - Upload your resume to see how ATS-friendly it is.');
+            else speakMessage('Say: Resume Editor, AI Assistant, Post Generator, Document Analysis, Comment Analyzer, JD Generator, Interview Q&A, or ATS Score.');
+        }
+        
+        function navigateAndSpeak(pageName, description) { showPage(pageName); if (description) speakMessage(description); closeVoiceGuide(); }
+        function closeVoiceGuide() { voiceGuidePanel.classList.remove('show'); }
+
+        // ============ RESUME EDITOR ==========
+        let selectedObjectiveType = "technical";
+        let skillsArray = ["Python", "Java", "JavaScript", "React.js", "Node.js", "HTML5", "CSS3", "Git"];
+        let educationArray = ["Bachelor of Computer Applications (BCA) - 7.85 GPA | Expected 2026"];
+        let projectsArray = ["AI Resume Builder - Python", "QR Generator - React.js"];
+        let certificationsArray = ["Oracle Cloud Infrastructure - AI Foundations Associate", "ReactJS for Beginners"];
+        let softSkillsArray = ["Problem-Solving", "Communication", "Team Collaboration", "Project Management"];
+        
+        function renderSkills() { document.getElementById('skillsContainer').innerHTML = skillsArray.map((s,i) => `<div class="list-item"><span>• ${s}</span><button onclick="removeSkill(${i})">Remove</button></div>`).join(''); }
+        function renderEducation() { document.getElementById('educationContainer').innerHTML = educationArray.map((e,i) => `<div class="list-item"><span>• ${e}</span><button onclick="removeEducation(${i})">Remove</button></div>`).join(''); }
+        function renderProjects() { document.getElementById('projectsContainer').innerHTML = projectsArray.map((p,i) => `<div class="list-item"><span>• ${p}</span><button onclick="removeProject(${i})">Remove</button></div>`).join(''); }
+        function renderCertifications() { document.getElementById('certificationsContainer').innerHTML = certificationsArray.map((c,i) => `<div class="list-item"><span>• ${c}</span><button onclick="removeCertification(${i})">Remove</button></div>`).join(''); }
+        function renderSoftSkills() { document.getElementById('softSkillsContainer').innerHTML = softSkillsArray.map((s,i) => `<div class="list-item"><span>• ${s}</span><button onclick="removeSoftSkill(${i})">Remove</button></div>`).join(''); }
+        
+        function addSkill() { let v=document.getElementById('newSkill').value.trim(); if(v){skillsArray.push(v); renderSkills(); document.getElementById('newSkill').value='';} }
+        function removeSkill(i) { skillsArray.splice(i,1); renderSkills(); }
+        function addEducation() { let v=document.getElementById('newEducation').value.trim(); if(v){educationArray.push(v); renderEducation(); document.getElementById('newEducation').value='';} }
+        function removeEducation(i) { educationArray.splice(i,1); renderEducation(); }
+        function addProject() { let v=document.getElementById('newProject').value.trim(); if(v){projectsArray.push(v); renderProjects(); document.getElementById('newProject').value='';} }
+        function removeProject(i) { projectsArray.splice(i,1); renderProjects(); }
+        function addCertification() { let v=document.getElementById('newCert').value.trim(); if(v){certificationsArray.push(v); renderCertifications(); document.getElementById('newCert').value='';} }
+        function removeCertification(i) { certificationsArray.splice(i,1); renderCertifications(); }
+        function addSoftSkill() { let v=document.getElementById('newSoftSkill').value.trim(); if(v){softSkillsArray.push(v); renderSoftSkills(); document.getElementById('newSoftSkill').value='';} }
+        function removeSoftSkill(i) { softSkillsArray.splice(i,1); renderSoftSkills(); }
+        
+        function setUserInfo(data) {
+            if(data.user_name) document.getElementById('userName').value = data.user_name;
+            if(data.user_email) document.getElementById('userEmail').value = data.user_email;
+            if(data.user_phone) document.getElementById('userPhone').value = data.user_phone;
+            if(data.user_location) document.getElementById('userLocation').value = data.user_location;
+            if(data.skills_detected && data.skills_detected.length) { skillsArray = data.skills_detected; renderSkills(); }
+        }
+        
+        document.getElementById('resumeFile').addEventListener('change', async (e) => {
+            if(!e.target.files[0]) return;
+            const status = document.getElementById('uploadStatus');
+            status.className = 'status info';
+            status.textContent = '📤 Uploading...';
+            const fd = new FormData();
+            fd.append('file', e.target.files[0]);
+            try {
+                const res = await fetch('/upload/document', { method: 'POST', body: fd });
+                const data = await res.json();
+                if(data.success) { status.className = 'status success'; status.textContent = data.message; setUserInfo(data); }
+                else throw new Error();
+            } catch(e) { status.className = 'status error'; status.textContent = 'Upload failed'; }
+        });
+        
+        function setRole(role) { document.getElementById('roleInput').value = role; generateObjective(); }
+        function selectObjectiveType(type) { selectedObjectiveType = type; document.getElementById('selectedTypeDisplay').style.display = 'block'; document.getElementById('selectedTypeText').innerHTML = type.charAt(0).toUpperCase() + type.slice(1); }
+        
+        async function generateObjective() {
+            const role = document.getElementById('roleInput').value.trim();
+            if(!role) { alert('Enter job role'); return; }
+            const loading = document.getElementById('loading');
+            loading.style.display = 'block';
+            try {
+                const res = await fetch('/generate_dynamic_objective', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({role: role, obj_type: selectedObjectiveType}) });
+                const data = await res.json();
+                loading.style.display = 'none';
+                if(data.success) document.getElementById('editableObjective').value = data.objective;
+                else alert('Error');
+            } catch(e) { loading.style.display = 'none'; alert('Error'); }
+        }
+        
+        async function downloadUpdatedPDF() {
+            const objective = document.getElementById('editableObjective').value.trim();
+            if(!objective) { alert('Please generate or enter an objective first!'); return; }
+            const btn = document.getElementById('downloadPdfBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Generating PDF...';
+            try {
+                const res = await fetch('/update_resume_pdf', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ objective: objective, role: document.getElementById('roleInput').value.trim() || "Professional", obj_type: selectedObjectiveType, color_theme: document.getElementById('colorTheme').value, border: document.getElementById('borderStyle').value, name: document.getElementById('userName').value.trim() || "Your Name", email: document.getElementById('userEmail').value.trim() || "your.email@example.com", phone: document.getElementById('userPhone').value.trim() || "+91 XXXXX XXXXX", location: document.getElementById('userLocation').value.trim() || "India", skills: skillsArray, education: educationArray, projects: projectsArray, certifications: certificationsArray, soft_skills: softSkillsArray }) });
+                if(!res.ok) throw new Error('Server error');
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'My_Resume.pdf';
+                a.click();
+                URL.revokeObjectURL(url);
+                alert('✅ Resume downloaded successfully!');
+            } catch(e) { alert('❌ Download failed: ' + e.message); }
+            finally { btn.disabled = false; btn.textContent = '📑 Download Resume PDF'; }
+        }
+
+        // ============ CHAT ==========
+        async function sendMessage() {
+            const msg = document.getElementById('chatInput').value.trim();
+            if(!msg) return;
+            const container = document.getElementById('chatMessages');
+            const userDiv = document.createElement('div');
+            userDiv.className = 'message user-message';
+            userDiv.textContent = msg;
+            container.appendChild(userDiv);
+            document.getElementById('chatInput').value = '';
+            container.scrollTop = container.scrollHeight;
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message bot-message';
+            typingDiv.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+            container.appendChild(typingDiv);
+            container.scrollTop = container.scrollHeight;
+            try {
+                const res = await fetch('/chat', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({message: msg}) });
+                const data = await res.json();
+                container.removeChild(typingDiv);
+                const botDiv = document.createElement('div');
+                botDiv.className = 'message bot-message';
+                botDiv.innerHTML = data.response.replace(/\n/g, '<br>');
+                container.appendChild(botDiv);
+                container.scrollTop = container.scrollHeight;
+            } catch(e) { container.removeChild(typingDiv); const errDiv = document.createElement('div'); errDiv.className = 'message bot-message'; errDiv.textContent = 'Error connecting to server.'; container.appendChild(errDiv); }
+        }
+        function sendQuickMsg(msg) { document.getElementById('chatInput').value = msg; sendMessage(); }
+
+        // ============ POST GENERATOR ==========
+        let selectedTone = "professional";
+        function selectTone(tone) { selectedTone = tone; document.getElementById('generatePostBtn').disabled = false; }
+
+        async function generatePost() {
+            const topic = document.getElementById('postTopic').value.trim();
+            if(!topic) { alert('Please enter a topic for your post'); return; }
+            const outputDiv = document.getElementById('postOutput');
+            outputDiv.innerHTML = '<div class="spinner" style="width:30px;height:30px;"></div><p style="text-align:center;">✨ Generating your professional post...</p>';
+            outputDiv.style.display = 'block';
+            try {
+                const res = await fetch('/generate_post', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({topic: topic, tone: selectedTone}) });
+                const data = await res.json();
+                let rawText = data.post;
+                rawText = rawText.replace(/\*\*/g, '').replace(/###/g, '').replace(/##/g, '').replace(/\*/g, '');
+                let paragraphs = rawText.split(/\n\n|\r\n\r\n/);
+                let formattedHtml = '';
+                for(let para of paragraphs) {
+                    para = para.trim();
+                    if(para.length === 0) continue;
+                    if(para.includes('•') || para.includes('- ') || para.match(/^\d+\./)) {
+                        let lines = para.split(/\n/);
+                        let bulletHtml = '';
+                        for(let line of lines) {
+                            line = line.trim();
+                            if(line.length > 0) {
+                                if(line.startsWith('•') || line.startsWith('-')) {
+                                    bulletHtml += `<li style="margin-bottom: 10px; line-height: 1.7;">${escapeHtmlForPost(line.substring(1).trim())}</li>`;
+                                } else if(line.match(/^\d+\./)) {
+                                    bulletHtml += `<li style="margin-bottom: 10px; line-height: 1.7;">${escapeHtmlForPost(line)}</li>`;
+                                } else if(line.length > 0) {
+                                    bulletHtml += `<li style="margin-bottom: 10px; line-height: 1.7;">${escapeHtmlForPost(line)}</li>`;
+                                }
+                            }
+                        }
+                        if(bulletHtml) {
+                            formattedHtml += `<ul style="margin: 20px 0 20px 25px; color: #333;">${bulletHtml}</ul>`;
+                        } else {
+                            formattedHtml += `<p style="margin-bottom: 18px; line-height: 1.8; color: #333;">${escapeHtmlForPost(para)}</p>`;
+                        }
+                    } else {
+                        formattedHtml += `<p style="margin-bottom: 18px; line-height: 1.8; color: #333; text-align: justify;">${escapeHtmlForPost(para)}</p>`;
+                    }
+                }
+                if(!formattedHtml) {
+                    formattedHtml = `<p style="margin-bottom: 18px; line-height: 1.8; color: #333;">${escapeHtmlForPost(rawText)}</p>`;
+                }
+                if(!rawText.toLowerCase().includes('share your thoughts') && !rawText.toLowerCase().includes('comment below')) {
+                    formattedHtml += `<hr style="margin: 25px 0 20px 0; border: none; border-top: 1px solid #e8e8e8;"><p style="margin-top: 20px; font-style: italic; color: #667eea; font-size: 15px;">💡 What are your thoughts on this topic? Share your perspective in the comments below! 👇</p>`;
+                }
+                let toneBadge = '';
+                if(selectedTone === 'professional') {
+                    toneBadge = `<span style="display: inline-block; background: #1a73e8; color: white; padding: 6px 16px; border-radius: 25px; font-size: 12px; font-weight: 500; margin-bottom: 20px;">📊 Professional & Corporate Tone</span>`;
+                } else if(selectedTone === 'casual') {
+                    toneBadge = `<span style="display: inline-block; background: #e67e22; color: white; padding: 6px 16px; border-radius: 25px; font-size: 12px; font-weight: 500; margin-bottom: 20px;">💬 Casual & Conversational Tone</span>`;
+                } else {
+                    toneBadge = `<span style="display: inline-block; background: #8e44ad; color: white; padding: 6px 16px; border-radius: 25px; font-size: 12px; font-weight: 500; margin-bottom: 20px;">✨ Inspirational & Motivational Tone</span>`;
+                }
+                outputDiv.innerHTML = `
+                    <div style="background: #ffffff; border-radius: 16px; padding: 25px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); border: 1px solid #eef2f6;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 5px;">
+                            ${toneBadge}
+                            <span style="font-size: 12px; color: #999;">✨ Generated by LinkenAI</span>
+                        </div>
+                        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; letter-spacing: 0.2px; margin-top: 10px;">
+                            ${formattedHtml}
+                        </div>
+                        <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #eef2f6; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                            <div style="display: flex; gap: 12px;">
+                                <span style="cursor: pointer; color: #667eea; font-size: 13px;" onclick="copyPostToClipboard()">📋 Copy Post</span>
+                                <span style="cursor: pointer; color: #667eea; font-size: 13px;" onclick="shareOnLinkedIn()">🔗 Share on LinkedIn</span>
+                            </div>
+                            <span style="font-size: 11px; color: #bbb;">${new Date().toLocaleDateString()} • Post length: ${rawText.length} characters</span>
+                        </div>
+                    </div>
+                `;
+            } catch(e) { outputDiv.innerHTML = '<p style="color: #dc3545; text-align: center; padding: 30px;">❌ Error generating post. Please try again.</p>'; }
+        }
+
+        function escapeHtmlForPost(text) { if (!text) return ''; const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+        function copyPostToClipboard() {
+            const outputDiv = document.getElementById('postOutput');
+            const textToCopy = outputDiv.innerText || outputDiv.textContent;
+            navigator.clipboard.writeText(textToCopy).then(() => alert('✅ Post copied!')).catch(() => alert('Could not copy'));
+        }
+        function shareOnLinkedIn() {
+            const outputDiv = document.getElementById('postOutput');
+            const textToShare = encodeURIComponent((outputDiv.innerText || outputDiv.textContent).substring(0, 1200));
+            window.open(`https://www.linkedin.com/sharing/share-offsite/?text=${textToShare}`, '_blank', 'width=600,height=500');
+        }
+
+        // ============ COMMENT ANALYZER ==========
+        async function analyzeComment() {
+            const comment = document.getElementById('commentInput').value.trim();
+            if(!comment) { alert('Enter comment'); return; }
+            try {
+                const res = await fetch('/reply', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({comment: comment}) });
+                const data = await res.json();
+                const resultDiv = document.getElementById('commentResult');
+                resultDiv.className = `status ${data.sentiment === 'positive' ? 'success' : 'error'}`;
+                resultDiv.innerHTML = `<strong>${data.sentiment_icon} Sentiment: ${data.sentiment.toUpperCase()}</strong><br><br><strong>Reply:</strong> ${data.reply}`;
+                resultDiv.style.display = 'block';
+            } catch(e) { alert('Error'); }
+        }
+
+        // ============ UPDATED DOCUMENT ANALYSIS ==========
+        let questionHistory = [];
+        let currentDocumentText = "";
+        let currentDocumentName = "";
+        let currentDocumentMetadata = { pages: 0, wordCount: 0, readingTime: 0 };
+
+        async function extractPDFText(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = async function(event) {
+                    try {
+                        const typedarray = new Uint8Array(event.target.result);
+                        const loadingTask = pdfjsLib.getDocument({ data: typedarray });
+                        const pdf = await loadingTask.promise;
+                        let fullText = '';
+                        let totalPages = pdf.numPages;
+                        for (let i = 1; i <= totalPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const textContent = await page.getTextContent();
+                            const pageText = textContent.items.map(item => item.str).join(' ');
+                            fullText += pageText + '\n\n';
+                            const status = document.getElementById('docStatus');
+                            if (status) { status.innerHTML = `📖 Reading PDF... Page ${i} of ${totalPages}`; }
+                        }
+                        fullText = fullText.replace(/\s+/g, ' ').trim();
+                        resolve({ text: fullText, pages: totalPages });
+                    } catch (error) { reject(error); }
+                };
+                reader.onerror = reject;
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        document.getElementById('docUpload').addEventListener('change', async (e) => {
+            if (!e.target.files[0]) return;
+            const file = e.target.files[0];
+            const status = document.getElementById('docStatus');
+            status.className = 'status info';
+            status.innerHTML = '📖 Reading PDF and extracting text... Please wait.';
+            status.style.display = 'block';
+            try {
+                const result = await extractPDFText(file);
+                currentDocumentText = result.text;
+                currentDocumentName = file.name;
+                currentDocumentMetadata.pages = result.pages;
+                const wordCount = currentDocumentText.split(/\s+/).length;
+                const readingTime = Math.max(1, Math.ceil(wordCount / 200));
+                currentDocumentMetadata.wordCount = wordCount;
+                currentDocumentMetadata.readingTime = readingTime;
+                status.className = 'status success';
+                status.innerHTML = `✅ Document "${file.name}" loaded successfully! ${wordCount} words extracted from ${result.pages} page(s). You can now ask questions.`;
+                document.getElementById('docInfoCard').style.display = 'block';
+                document.getElementById('docName').innerHTML = `📄 ${file.name}`;
+                document.getElementById('docPages').innerText = result.pages;
+                document.getElementById('docWords').innerText = wordCount;
+                document.getElementById('docReadingTime').innerText = readingTime;
+                document.getElementById('docQA').style.display = 'block';
+                localStorage.setItem('currentDocumentText', currentDocumentText);
+                localStorage.setItem('currentDocumentName', currentDocumentName);
+                localStorage.setItem('currentDocumentMetadata', JSON.stringify(currentDocumentMetadata));
+            } catch (error) {
+                status.className = 'status error';
+                status.innerHTML = '❌ Error reading PDF. Please ensure it is a text-based PDF (not scanned image).';
+                currentDocumentText = "";
+            }
+        });
+
+        async function loadURL() {
+            const url = document.getElementById('urlInput').value.trim();
+            if(!url) { alert('Enter URL'); return; }
+            const status = document.getElementById('docStatus');
+            status.className = 'status info';
+            status.textContent = '🌐 Loading URL content...';
+            status.style.display = 'block';
+            try {
+                const response = await fetch(url, { mode: 'cors' }).catch(() => null);
+                let mockContent = '';
+                if (response && response.ok) {
+                    const html = await response.text();
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = html;
+                    mockContent = tempDiv.textContent || tempDiv.innerText || '';
+                    mockContent = mockContent.replace(/\s+/g, ' ').trim().substring(0, 10000);
+                } else {
+                    mockContent = `This is a demonstration of URL content analysis. The URL ${url} was analyzed. In a production environment, the system would extract the full text content from this webpage for comprehensive analysis. The current document shows how the AI would process and answer questions based on the extracted content.`;
+                }
+                currentDocumentText = mockContent;
+                currentDocumentName = url;
+                const wordCount = mockContent.split(/\s+/).length;
+                const readingTime = Math.max(1, Math.ceil(wordCount / 200));
+                currentDocumentMetadata = { pages: 1, wordCount: wordCount, readingTime: readingTime };
+                status.className = 'status success';
+                status.innerHTML = `✅ URL content loaded! ${wordCount} words extracted.`;
+                document.getElementById('docInfoCard').style.display = 'block';
+                document.getElementById('docName').innerHTML = `🔗 ${url.substring(0, 60)}...`;
+                document.getElementById('docPages').innerText = '1';
+                document.getElementById('docWords').innerText = wordCount;
+                document.getElementById('docReadingTime').innerText = readingTime;
+                document.getElementById('docQA').style.display = 'block';
+                localStorage.setItem('currentDocumentText', currentDocumentText);
+                localStorage.setItem('currentDocumentName', currentDocumentName);
+            } catch(e) { 
+                status.className = 'status error'; 
+                status.textContent = '❌ Load failed. URLs may have CORS restrictions. Try uploading a PDF instead.';
+            }
+        }
+
+        function getSmartAnswerBasedOnQuestion(question, documentText, documentName) {
+            if (!documentText || documentText.trim().length < 50) {
+                return `<div style="background: #fff3cd; padding: 20px; border-radius: 12px; border-left: 4px solid #ffc107;">
+                            <h4 style="color: #856404; margin-bottom: 10px;">⚠️ No Document Loaded</h4>
+                            <p>Please upload a PDF document or load a URL first before asking questions.</p>
+                        </div>`;
+            }
+            const q = question.toLowerCase();
+            const sentences = documentText.split(/[.!?;:]+/).filter(s => s.trim().length > 20);
+            if (sentences.length === 0) {
+                return `<div style="background: #fff3cd; padding: 20px; border-radius: 12px; border-left: 4px solid #ffc107;">
+                            <h4 style="color: #856404;">📄 Document Preview Limited</h4>
+                            <p>The document "${documentName.substring(0, 50)}" was uploaded but no clear sentences could be extracted.</p>
+                        </div>`;
+            }
+            const stopWords = ['what', 'where', 'when', 'why', 'how', 'which', 'who', 'is', 'are', 'was', 'were', 'the', 'a', 'an', 'and', 'or', 'but', 'of', 'to', 'for', 'in', 'on', 'at', 'by', 'with', 'without', 'about', 'from', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'between', 'using', 'being'];
+            let keywords = q.split(/\s+/).filter(w => w.length > 3 && !stopWords.includes(w));
+            if (keywords.length === 0) keywords = [q.substring(0, 30)];
+            let scoredSentences = [];
+            for (let sentence of sentences) {
+                const sentenceLower = sentence.toLowerCase();
+                let matchScore = 0;
+                for (let kw of keywords) {
+                    if (sentenceLower.includes(kw)) {
+                        matchScore += 2;
+                        if (sentenceLower.includes(kw + ' ') || sentenceLower.includes(' ' + kw)) matchScore += 1;
+                    }
+                }
+                if (/\d{4}|\d{1,2}\/\d{1,2}/.test(sentence)) matchScore += 1;
+                if (sentence.length > 50 && sentence.length < 300) matchScore += 0.5;
+                if (matchScore > 0) scoredSentences.push({ score: matchScore, text: sentence.trim() });
+            }
+            scoredSentences.sort((a, b) => b.score - a.score);
+            if (scoredSentences.length > 0) {
+                const topAnswers = scoredSentences.slice(0, Math.min(3, scoredSentences.length));
+                let answerHtml = `<div style="background: #e8f5e9; padding: 20px; border-radius: 12px; border-left: 4px solid #4caf50;">
+                                    <h4 style="color: #2e7d32; margin-bottom: 15px;">📌 Answer based on your document:</h4>`;
+                topAnswers.forEach((ans, idx) => {
+                    answerHtml += `<div style="margin-bottom: ${idx === topAnswers.length - 1 ? '0' : '15px'}; padding-bottom: ${idx === topAnswers.length - 1 ? '0' : '10px'}; ${idx !== topAnswers.length - 1 ? 'border-bottom: 1px solid #c8e6c9;' : ''}">
+                                        <div style="font-size: 14px; color: #555; line-height: 1.6;">${escapeHtmlForDoc(ans.text)}</div>
+                                    </div>`;
+                });
+                answerHtml += `<p style="margin-top: 15px; font-size: 12px; color: #888;">📊 Found in ${scoredSentences.length} relevant sentence(s)</p></div>`;
+                return answerHtml;
+            }
+            const preview = sentences.slice(0, 4).map(s => s.trim()).join('. ');
+            const previewShort = preview.length > 500 ? preview.substring(0, 500) + '...' : preview;
+            const wordFrequency = {};
+            const words = documentText.toLowerCase().split(/\s+/);
+            words.forEach(w => { if (w.length > 4 && !stopWords.includes(w)) wordFrequency[w] = (wordFrequency[w] || 0) + 1; });
+            const topKeywords = Object.entries(wordFrequency).sort((a, b) => b[1] - a[1]).slice(0, 8).map(kw => kw[0]);
+            let suggestionsHtml = '';
+            if (topKeywords.length > 0) {
+                suggestionsHtml = `<div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ffe0b2;">
+                                        <strong>💡 Try asking about:</strong><br>
+                                        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;">
+                                            ${topKeywords.map(kw => `<span class="quick-btn" style="font-size: 11px;" onclick="askSuggested('Tell me about ${kw}')">${kw}</span>`).join('')}
+                                        </div>
+                                    </div>`;
+            }
+            return `<div style="background: #fff3e0; padding: 20px; border-radius: 12px; border-left: 4px solid #ff9800;">
+                        <h4 style="color: #e65100; margin-bottom: 10px;">📄 Couldn't find specific match for "${question.substring(0, 50)}"</h4>
+                        <p style="margin-bottom: 10px;">Here's a preview of what the document contains:</p>
+                        <div style="background: white; padding: 12px; border-radius: 8px; font-style: italic; max-height: 150px; overflow-y: auto;">
+                            "${previewShort}"
+                        </div>
+                        ${suggestionsHtml}
+                    </div>`;
+        }
+
+        async function askDocument() {
+            const question = document.getElementById('docQuestion').value.trim();
+            if(!question) { alert('Enter your question about the document'); return; }
+            if (!currentDocumentText || currentDocumentText.trim().length === 0) {
+                const answerDiv = document.getElementById('docAnswer');
+                answerDiv.style.display = 'block';
+                answerDiv.innerHTML = `<div style="background: #fff3cd; padding: 20px; border-radius: 12px; border-left: 4px solid #ffc107;">
+                                            <strong>⚠️ No Document Loaded</strong><br><br>
+                                            Please upload a PDF document or load a URL first.
+                                        </div>`;
+                return;
+            }
+            const answerDiv = document.getElementById('docAnswer');
+            answerDiv.style.display = 'block';
+            answerDiv.innerHTML = '<div class="spinner" style="width:30px;height:30px;margin:20px auto;"></div><p style="text-align:center;">Analyzing document for your question...</p>';
+            setTimeout(() => {
+                const formattedAnswer = getSmartAnswerBasedOnQuestion(question, currentDocumentText, currentDocumentName);
+                answerDiv.innerHTML = formattedAnswer;
+                questionHistory.unshift({ question: question, answer: formattedAnswer.replace(/<[^>]*>/g, '').substring(0, 200) + '...', timestamp: new Date().toLocaleTimeString() });
+                saveHistory();
+                displayHistory();
+                document.getElementById('docQuestion').value = '';
+            }, 800);
+        }
+
+        function askSuggested(q) { document.getElementById('docQuestion').value = q; askDocument(); }
+        function saveHistory() { localStorage.setItem('docQuestionHistory', JSON.stringify(questionHistory.slice(0, 15))); }
+        function loadHistory() { const saved = localStorage.getItem('docQuestionHistory'); if(saved) { questionHistory = JSON.parse(saved); displayHistory(); } }
+        function displayHistory() {
+            const historyBox = document.getElementById('historyBox');
+            const historyList = document.getElementById('historyList');
+            if(questionHistory && questionHistory.length > 0) {
+                historyBox.style.display = 'block';
+                historyList.innerHTML = questionHistory.slice(0, 10).map((item, idx) => `
+                    <div class="history-item" onclick="replayQuestion(${idx})" style="cursor: pointer; padding: 10px; margin: 5px 0; background: #f8f9fa; border-radius: 8px;">
+                        <strong>❓ ${escapeHtmlForDoc(item.question)}</strong><br>
+                        <small style="color: #888;">${item.timestamp}</small>
+                        <p style="margin-top: 5px; font-size: 12px; color: #666;">${escapeHtmlForDoc(item.answer)}</p>
+                    </div>
+                `).join('');
+            } else { historyBox.style.display = 'none'; }
+        }
+        function replayQuestion(idx) { if (questionHistory[idx]) { document.getElementById('docQuestion').value = questionHistory[idx].question; askDocument(); } }
+        function clearHistory() { if(confirm('Clear all question history?')) { questionHistory = []; saveHistory(); displayHistory(); alert('History cleared!'); } }
+        function deleteDocument() {
+            if(!confirm('Delete the current document? This will clear all analysis data.')) return;
+            currentDocumentText = ""; currentDocumentName = ""; currentDocumentMetadata = { pages: 0, wordCount: 0, readingTime: 0 };
+            document.getElementById('docInfoCard').style.display = 'none';
+            document.getElementById('docQA').style.display = 'none';
+            document.getElementById('docAnswer').style.display = 'none';
+            document.getElementById('historyBox').style.display = 'none';
+            questionHistory = [];
+            document.getElementById('docStatus').className = 'status info';
+            document.getElementById('docStatus').innerHTML = 'Document deleted. Upload a new PDF to analyze.';
+            document.getElementById('docUpload').value = '';
+            document.getElementById('urlInput').value = '';
+            localStorage.removeItem('currentDocumentText');
+            localStorage.removeItem('currentDocumentName');
+            localStorage.removeItem('currentDocumentMetadata');
+            saveHistory();
+            alert('Document deleted successfully');
+        }
+        function refreshDocument() {
+            if(!confirm('Refresh will reload the document from saved data. Continue?')) return;
+            const savedDoc = localStorage.getItem('currentDocumentText');
+            if (savedDoc) {
+                currentDocumentText = savedDoc;
+                currentDocumentName = localStorage.getItem('currentDocumentName') || 'Restored document';
+                const wordCount = currentDocumentText.split(/\s+/).length;
+                const pages = Math.max(1, Math.ceil(wordCount / 300));
+                document.getElementById('docInfoCard').style.display = 'block';
+                document.getElementById('docName').innerHTML = `📄 ${currentDocumentName}`;
+                document.getElementById('docPages').innerText = pages;
+                document.getElementById('docWords').innerText = wordCount;
+                document.getElementById('docReadingTime').innerText = Math.ceil(wordCount / 200);
+                document.getElementById('docQA').style.display = 'block';
+                document.getElementById('docStatus').className = 'status success';
+                document.getElementById('docStatus').innerHTML = `Document restored from saved data.`;
+            } else { alert('No saved document to refresh.'); }
+        }
+        function escapeHtmlForDoc(text) { if (!text) return ''; const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+        
+        const savedDoc = localStorage.getItem('currentDocumentText');
+        if (savedDoc && savedDoc.length > 500) {
+            currentDocumentText = savedDoc;
+            currentDocumentName = localStorage.getItem('currentDocumentName') || 'Saved document';
+            const wordCount = savedDoc.split(/\s+/).length;
+            const pages = Math.max(1, Math.ceil(wordCount / 300));
+            document.getElementById('docInfoCard').style.display = 'block';
+            document.getElementById('docQA').style.display = 'block';
+            document.getElementById('docName').innerHTML = `📄 ${currentDocumentName}`;
+            document.getElementById('docPages').innerText = pages;
+            document.getElementById('docWords').innerText = wordCount;
+            document.getElementById('docReadingTime').innerText = Math.ceil(wordCount / 200);
+            loadHistory();
+        }
+
+        // ============ JD PDF GENERATOR ==========
+        async function generateJDPDF() {
+            const { jsPDF } = window.jspdf;
+            const company = document.getElementById('jdCompany').value;
+            const position = document.getElementById('jdPosition').value;
+            const location = document.getElementById('jdLocation').value;
+            const salary = document.getElementById('jdSalary').value;
+            const description = document.getElementById('jdDescription').value || 'Job description here';
+            const tempDiv = document.createElement('div');
+            tempDiv.style.padding = '40px';
+            tempDiv.style.background = 'white';
+            tempDiv.style.fontFamily = 'Arial';
+            tempDiv.style.width = '794px';
+            tempDiv.innerHTML = `<h1 style="text-align:center;color:#667eea;">📋 JOB DESCRIPTION</h1><div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:20px 0;padding:15px;background:#f8f9fa;border-radius:10px;"><div><strong>🏢 COMPANY</strong><br>${escapeHtml(company)}</div><div><strong>📍 LOCATION</strong><br>${escapeHtml(location)}</div><div><strong>💼 POSITION</strong><br>${escapeHtml(position)}</div><div><strong>💰 SALARY</strong><br>${escapeHtml(salary)}</div></div><div style="margin:20px 0;"><strong>📋 JOB DESCRIPTION</strong></div><div style="white-space:pre-line;">${escapeHtml(description)}</div>`;
+            document.body.appendChild(tempDiv);
+            try {
+                const canvas = await html2canvas(tempDiv, { scale: 2 });
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const imgWidth = 210;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                pdf.save(`Job_Description_${position.replace(/\s/g, '_')}.pdf`);
+                alert('✅ PDF generated!');
+            } catch(e) { alert('Error: ' + e.message); }
+            finally { document.body.removeChild(tempDiv); }
+        }
+
+        // ============ INTERVIEW QUESTIONS ==========
+        const interviewDatabase = {
+            role: {
+                developer: { title: "Software Developer", icon: "💻", questions: [
+                    { q: "What is your experience with full-stack development?", a: "I have worked on multiple full-stack projects using React for frontend and Node.js/Python for backend." },
+                    { q: "How do you handle tight deadlines and pressure?", a: "I prioritize tasks based on impact and urgency, break down large features into smaller deliverables." },
+                    { q: "Explain a challenging bug you fixed.", a: "I fixed a memory leak in React by identifying event listeners that weren't cleaned up in useEffect." }
+                ] },
+                data_analyst: { title: "Data Analyst", icon: "📊", questions: [
+                    { q: "What tools do you use for data analysis?", a: "Python (pandas, numpy), SQL, Tableau/Power BI, and Excel." },
+                    { q: "How do you handle missing data?", a: "I analyze missing patterns and use imputation techniques or document limitations." }
+                ] },
+                manager: { title: "Project Manager", icon: "📋", questions: [
+                    { q: "Describe your project management methodology.", a: "I use Agile/Scrum with 2-week sprints, daily stand-ups, and retrospectives." },
+                    { q: "How do you handle team conflicts?", a: "I address conflicts early through one-on-one conversations and facilitate open communication." }
+                ] }
+            },
+            company: {
+                google: { name: "Google", icon: "🏢", questions: [
+                    { q: "Why do you want to work at Google?", a: "Google's commitment to innovation and global impact aligns with my career goals." },
+                    { q: "Describe a time you showed leadership.", a: "I stepped up during a critical project to coordinate tasks and ensure on-time delivery." }
+                ] },
+                amazon: { name: "Amazon", icon: "📦", questions: [
+                    { q: "What do you know about Amazon's Leadership Principles?", a: "Customer Obsession is #1 - start with the customer and work backwards." },
+                    { q: "Tell me about a time you went above and beyond.", a: "I rewrote technical documentation reducing onboarding time from 3 weeks to 1 week." }
+                ] },
+                microsoft: { name: "Microsoft", icon: "🪟", questions: [
+                    { q: "Why Microsoft?", a: "Microsoft's mission to empower every person and organization resonates with me." },
+                    { q: "Describe a complex problem you solved.", a: "I optimized a slow SQL query from 45 seconds to under 2 seconds using proper indexes." }
+                ] }
+            },
+            behavioral: [
+                { q: "Tell me about yourself.", a: "I'm a passionate software developer with 3+ years of experience in full-stack development." },
+                { q: "What are your strengths and weaknesses?", a: "My strengths are problem-solving and collaboration. I'm improving my public speaking." },
+                { q: "Where do you see yourself in 5 years?", a: "As a technical lead mentoring junior developers and architecting complex solutions." },
+                { q: "Why should we hire you?", a: "I bring technical skills, business understanding, and a growth mindset." }
+            ],
+            technical: {
+                python: [
+                    { q: "What are Python decorators?", a: "Decorators modify function behavior using @ syntax, used for logging and timing functions." },
+                    { q: "Explain list comprehension and generators.", a: "List comprehensions create lists concisely; generators use yield for memory efficiency." }
+                ],
+                javascript: [
+                    { q: "Explain closures in JavaScript.", a: "A closure is a function that remembers its lexical scope even when executed outside." },
+                    { q: "What is the event loop?", a: "The event loop handles async operations, pushing callbacks to stack when empty." }
+                ],
+                sql: [
+                    { q: "Difference between INNER JOIN and LEFT JOIN?", a: "INNER JOIN returns only matches; LEFT JOIN returns all left table rows." }
+                ]
+            },
+            hr: [
+                { q: "What are your salary expectations?", a: "Based on market research, I'm looking for ₹12-15 LPA, flexible for the right opportunity." },
+                { q: "Why is there a gap in your resume?", a: "During that period, I took time to upskill through online courses and certifications." }
+            ],
+            fresher: [
+                { q: "Why did you choose this field?", a: "I've always been fascinated by technology's ability to solve real-world problems." },
+                { q: "What college projects have you done?", a: "Built an e-commerce website using MERN stack and an AI-based resume parser." }
+            ]
+        };
+
+        async function loadInterviewQuestions(category, subcategory) {
+            const loading = document.getElementById('questionsLoading');
+            const questionsList = document.getElementById('questionsList');
+            const subcategorySelector = document.getElementById('subcategorySelector');
+            const subcategoryButtons = document.getElementById('subcategoryButtons');
+            if (loading) loading.style.display = 'block';
+            if (questionsList) questionsList.innerHTML = '';
+            if (event && event.target) {
+                document.querySelectorAll('#interviewPage .quick-buttons .quick-btn').forEach(btn => { btn.style.background = '#f0f0ff'; btn.style.color = '#667eea'; });
+                event.target.style.background = '#667eea'; event.target.style.color = 'white';
+            }
+            if (category === 'role') {
+                subcategorySelector.style.display = 'block';
+                subcategoryButtons.innerHTML = `<span class="quick-btn" onclick="loadInterviewQuestions('role', 'developer')">💻 Developer</span><span class="quick-btn" onclick="loadInterviewQuestions('role', 'data_analyst')">📊 Data Analyst</span><span class="quick-btn" onclick="loadInterviewQuestions('role', 'manager')">📋 Project Manager</span>`;
+                const data = interviewDatabase.role[subcategory];
+                if (data) displayInterviewQuestions(data.questions, data.title, data.icon);
+            } else if (category === 'company') {
+                subcategorySelector.style.display = 'block';
+                subcategoryButtons.innerHTML = `<span class="quick-btn" onclick="loadInterviewQuestions('company', 'google')">🏢 Google</span><span class="quick-btn" onclick="loadInterviewQuestions('company', 'amazon')">📦 Amazon</span><span class="quick-btn" onclick="loadInterviewQuestions('company', 'microsoft')">🪟 Microsoft</span>`;
+                const data = interviewDatabase.company[subcategory];
+                if (data) displayInterviewQuestions(data.questions, data.name, data.icon);
+            } else if (category === 'behavioral') {
+                subcategorySelector.style.display = 'none';
+                displayInterviewQuestions(interviewDatabase.behavioral, "Behavioral Questions (STAR Method)", "💬");
+            } else if (category === 'technical') {
+                subcategorySelector.style.display = 'block';
+                subcategoryButtons.innerHTML = `<span class="quick-btn" onclick="loadInterviewQuestions('technical', 'python')">🐍 Python</span><span class="quick-btn" onclick="loadInterviewQuestions('technical', 'javascript')">📜 JavaScript</span><span class="quick-btn" onclick="loadInterviewQuestions('technical', 'sql')">🗄️ SQL</span>`;
+                const data = interviewDatabase.technical[subcategory];
+                if (data) displayInterviewQuestions(data, `Technical Questions - ${subcategory.toUpperCase()}`, "🔧");
+            } else if (category === 'hr') {
+                subcategorySelector.style.display = 'none';
+                displayInterviewQuestions(interviewDatabase.hr, "HR Interview Questions", "👔");
+            } else if (category === 'fresher') {
+                subcategorySelector.style.display = 'none';
+                displayInterviewQuestions(interviewDatabase.fresher, "Fresher / Entry-Level Questions", "🎓");
+            }
+            if (loading) loading.style.display = 'none';
+        }
+
+        function displayInterviewQuestions(questions, title, icon) {
+            const container = document.getElementById('questionsList');
+            if (!container) return;
+            let html = `<div style="background: linear-gradient(135deg, #667eea20, #764ba220); padding: 15px; border-radius: 10px; margin-bottom: 20px;"><h3>${icon} ${escapeHtml(title)} Interview Questions</h3><p style="color: #666;">Practice these questions with detailed standard answers</p></div>`;
+            questions.forEach((item, index) => {
+                const questionText = item.q || item.question;
+                const answerText = item.a || item.answer;
+                html += `<div class="interview-card" style="background: white; border: 1px solid #e0e0e0; border-radius: 12px; margin-bottom: 15px; overflow: hidden;">
+                            <div class="question-header" style="padding: 15px; background: #f8f9fa; cursor: pointer; display: flex; justify-content: space-between; align-items: center;" onclick="toggleAnswer(${index})">
+                                <strong style="color: #333;">${index + 1}. ${escapeHtml(questionText)}</strong>
+                                <span id="toggleIcon${index}" style="font-size: 20px; color: #667eea;">▼</span>
+                            </div>
+                            <div id="answer${index}" class="answer-content" style="padding: 0 15px; max-height: 0; overflow: hidden; transition: all 0.3s ease;">
+                                <div style="padding: 15px 0; border-top: 1px solid #e0e0e0;">
+                                    <strong style="color: #28a745;">💡 Standard Answer:</strong>
+                                    <p style="margin-top: 8px; color: #555; line-height: 1.6;">${escapeHtml(answerText)}</p>
+                                </div>
+                            </div>
+                        </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function toggleAnswer(index) {
+            const answerDiv = document.getElementById(`answer${index}`);
+            const iconSpan = document.getElementById(`toggleIcon${index}`);
+            if (answerDiv && iconSpan) {
+                if (answerDiv.style.maxHeight === '0px' || answerDiv.style.maxHeight === '') {
+                    answerDiv.style.maxHeight = answerDiv.scrollHeight + 'px';
+                    iconSpan.innerHTML = '▲';
+                } else {
+                    answerDiv.style.maxHeight = '0px';
+                    iconSpan.innerHTML = '▼';
+                }
+            }
+        }
+
+        function escapeHtml(text) { if (!text) return ''; const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+
+        // ============ UPDATED ATS SCORE ==========
+        const atsTechKeywords = ['python', 'java', 'javascript', 'react', 'angular', 'vue', 'node', 'nodejs', 'html', 'css', 'sql', 'mongodb', 'postgresql', 'mysql', 'git', 'docker', 'kubernetes', 'aws', 'azure', 'gcp', 'api', 'rest', 'graphql', 'django', 'flask', 'spring', 'springboot', 'c++', 'c#', 'php', 'ruby', 'go', 'golang', 'rust', 'swift', 'kotlin', 'tensorflow', 'pytorch', 'pandas', 'numpy', 'machine learning', 'ml', 'ai', 'artificial intelligence', 'data analysis', 'data science', 'tableau', 'power bi', 'excel', 'salesforce', 'sap', 'oracle', 'linux', 'unix', 'jenkins', 'terraform', 'ansible', 'prometheus'];
+        const atsSoftKeywords = ['leadership', 'communication', 'teamwork', 'problem solving', 'critical thinking', 'time management', 'adaptability', 'creativity', 'collaboration', 'analytical', 'project management', 'organization', 'detail oriented', 'initiative', 'self motivated', 'quick learner', 'interpersonal', 'negotiation', 'presentation', 'written communication', 'verbal communication', 'team player'];
+        const atsActionVerbs = ['achieved', 'improved', 'increased', 'developed', 'created', 'built', 'designed', 'implemented', 'launched', 'led', 'managed', 'coordinated', 'analyzed', 'optimized', 'solved', 'delivered', 'executed', 'established', 'facilitated', 'generated', 'identified', 'implemented', 'initiated', 'introduced', 'monitored', 'organized', 'planned', 'produced', 'recommended', 'reduced', 'reorganized', 'restructured', 'reviewed', 'streamlined', 'supervised'];
+        const atsSections = ['summary', 'experience', 'education', 'skills', 'projects', 'certifications', 'achievements', 'languages'];
+
+        async function extractResumeText(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = async function(event) {
+                    try {
+                        const typedarray = new Uint8Array(event.target.result);
+                        const loadingTask = pdfjsLib.getDocument({ data: typedarray });
+                        const pdf = await loadingTask.promise;
+                        let fullText = '';
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const textContent = await page.getTextContent();
+                            const pageText = textContent.items.map(item => item.str).join(' ');
+                            fullText += pageText + '\n';
+                        }
+                        fullText = fullText.replace(/\s+/g, ' ').trim();
+                        resolve(fullText);
+                    } catch (error) { reject(new Error('Failed to extract text: ' + error.message)); }
+                };
+                reader.onerror = () => reject(new Error('File reading failed'));
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        function calculateATSScore(resumeText, fileName = '') {
+            if (!resumeText || resumeText.trim().length < 100) {
+                return { success: false, score: 0, rating: 'Poor', rating_message: 'Resume too short for analysis.', word_count: resumeText ? resumeText.split(/\s+/).length : 0, skills_count: 0, action_verbs: 0, sections_found: 0, feedback: ['❌ Resume content too short'], suggestions: ['Add more details to your resume'], keywordsFound: [], detailed_breakdown: {} };
+            }
+            const text = resumeText.toLowerCase();
+            const wordCount = resumeText.split(/\s+/).length;
+            let foundTech = 0, foundSoft = 0, foundVerbs = 0, foundSections = 0, keywordsFound = [], techKeywordsFound = [], softKeywordsFound = [];
+            for (let kw of atsTechKeywords) { if (text.includes(kw.toLowerCase())) { foundTech++; techKeywordsFound.push(kw); if (!keywordsFound.includes(kw)) keywordsFound.push(kw); } }
+            for (let kw of atsSoftKeywords) { if (text.includes(kw.toLowerCase())) { foundSoft++; softKeywordsFound.push(kw); if (!keywordsFound.includes(kw)) keywordsFound.push(kw); } }
+            for (let v of atsActionVerbs) { if (text.includes(v.toLowerCase())) foundVerbs++; }
+            for (let s of atsSections) { if (text.includes(s.toLowerCase())) foundSections++; }
+            const totalKeywords = foundTech + foundSoft;
+            let techScore = Math.min(100, (foundTech / 15) * 100);
+            let softScore = Math.min(100, (foundSoft / 10) * 100);
+            let verbScore = Math.min(100, (foundVerbs / 12) * 100);
+            let sectionScore = (foundSections / atsSections.length) * 100;
+            let lengthScore = 100;
+            if (wordCount < 250) lengthScore = (wordCount / 250) * 60;
+            else if (wordCount < 400) lengthScore = 70 + ((wordCount - 250) / 150) * 30;
+            else if (wordCount > 1000) lengthScore = Math.max(70, 100 - ((wordCount - 800) / 500) * 30);
+            let quantScore = 50;
+            const percentageMatches = text.match(/\d+%/g);
+            const numberMatches = text.match(/\b\d{2,}\b/g);
+            if (percentageMatches && percentageMatches.length >= 1) quantScore += 25;
+            if (numberMatches && numberMatches.length >= 2) quantScore += 25;
+            quantScore = Math.min(100, quantScore);
+            let contactScore = 0;
+            if (text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/)) contactScore += 40;
+            if (text.match(/\b\d{10}\b|\+\d{1,3}\s?\d{10}\b/)) contactScore += 40;
+            if (text.match(/linkedin\.com\/in\//)) contactScore += 20;
+            let formatScore = 0;
+            if (foundSections >= 3) formatScore = 60;
+            if (foundSections >= 5) formatScore = 80;
+            if (foundSections >= 6) formatScore = 100;
+            let finalScore = Math.round((techScore * 0.25) + (softScore * 0.10) + (verbScore * 0.15) + (sectionScore * 0.10) + (lengthScore * 0.10) + (quantScore * 0.10) + (contactScore * 0.10) + (formatScore * 0.10));
+            finalScore = Math.min(100, Math.max(0, finalScore));
+            let rating = finalScore >= 85 ? 'Excellent' : finalScore >= 70 ? 'Good' : finalScore >= 55 ? 'Fair' : finalScore >= 40 ? 'Needs Improvement' : 'Poor';
+            let ratingMessage = finalScore >= 85 ? '🎉 Excellent! Your resume is highly optimized for ATS systems.' : finalScore >= 70 ? '✅ Good! Minor improvements needed.' : finalScore >= 55 ? '⚠️ Fair score. Needs moderate improvements.' : finalScore >= 40 ? '🔧 Needs improvement. Consider revisions.' : '❌ Poor score. Major revisions recommended.';
+            let feedback = [], suggestions = [];
+            if (foundTech >= 12) feedback.push(`✅ Excellent technical skills (${foundTech} keywords)`);
+            else if (foundTech >= 8) feedback.push(`👍 Good technical skills (${foundTech} keywords)`);
+            else suggestions.push(`💻 Add technical skills: ${atsTechKeywords.slice(0, 6).join(', ')}...`);
+            if (foundVerbs >= 10) feedback.push(`✅ Strong action verbs (${foundVerbs} verbs)`);
+            else if (foundVerbs >= 6) feedback.push(`👍 Good action verbs (${foundVerbs} verbs)`);
+            else suggestions.push(`📝 Use action verbs: ${atsActionVerbs.slice(0, 6).join(', ')}`);
+            if (foundSections >= 5) feedback.push(`✅ Excellent section structure (${foundSections}/8 sections)`);
+            else if (foundSections >= 3) feedback.push(`👍 Good section structure (${foundSections}/8 sections)`);
+            else suggestions.push(`📋 Add sections: Experience, Education, Skills, Projects`);
+            if (wordCount >= 400 && wordCount <= 800) feedback.push(`✅ Optimal length (${wordCount} words)`);
+            else if (wordCount < 300) suggestions.push(`📄 Expand resume to 400-800 words (currently ${wordCount})`);
+            if (percentageMatches && percentageMatches.length >= 2) feedback.push(`✅ Good quantifiable achievements (${percentageMatches.length} metrics)`);
+            else suggestions.push(`📊 Add metrics: "Increased X by 30%", "Reduced costs by 20%"`);
+            const detailed_breakdown = { technical_skills: { score: techScore, found: foundTech, max: 15 }, soft_skills: { score: softScore, found: foundSoft, max: 10 }, action_verbs: { score: verbScore, found: foundVerbs, max: 12 }, sections: { score: sectionScore, found: foundSections, max: atsSections.length }, resume_length: { score: lengthScore, words: wordCount }, quantifiable: { score: quantScore, metrics: percentageMatches?.length || 0 }, contact_info: { score: contactScore }, formatting: { score: formatScore } };
+            return { success: true, score: finalScore, rating: rating, rating_message: ratingMessage, word_count: wordCount, skills_count: totalKeywords, action_verbs: foundVerbs, sections_found: foundSections, tech_skills_found: foundTech, soft_skills_found: foundSoft, feedback: feedback.slice(0, 5), suggestions: suggestions.slice(0, 6), keywordsFound: keywordsFound.slice(0, 20), techKeywordsFound: techKeywordsFound.slice(0, 15), softKeywordsFound: softKeywordsFound.slice(0, 10), detailed_breakdown: detailed_breakdown };
+        }
+
+        document.getElementById('atsFile').addEventListener('change', async (e) => {
+            if (!e.target.files[0]) return;
+            const file = e.target.files[0];
+            const status = document.getElementById('atsStatus');
+            status.className = 'status info';
+            status.innerHTML = '📤 Reading resume file... Please wait.';
+            status.style.display = 'block';
+            document.getElementById('atsResult').style.display = 'none';
+            try {
+                let resumeText = '';
+                if (file.type === 'application/pdf') {
+                    status.innerHTML = '📄 Extracting text from PDF...';
+                    resumeText = await extractResumeText(file);
+                } else if (file.type === 'text/plain' || file.name.endsWith('.txt') || file.name.endsWith('.md')) {
+                    const reader = new FileReader();
+                    resumeText = await new Promise((resolve, reject) => { reader.onload = (event) => resolve(event.target.result); reader.onerror = reject; reader.readAsText(file); });
+                } else { status.className = 'status error'; status.innerHTML = '❌ Unsupported file type. Please upload PDF, TXT, or MD files.'; return; }
+                if (!resumeText || resumeText.trim().length < 100) { status.className = 'status error'; status.innerHTML = `⚠️ Extracted text too short (${resumeText?.length || 0} chars).`; return; }
+                status.innerHTML = '🔍 Analyzing resume against ATS criteria...';
+                await new Promise(r => setTimeout(r, 500));
+                const result = calculateATSScore(resumeText, file.name);
+                const radius = 80, circumference = 2 * Math.PI * radius;
+                const offset = circumference - (result.score / 100) * circumference;
+                const circle = document.getElementById('atsScoreCircle');
+                if (circle) { circle.style.strokeDasharray = circumference; circle.style.strokeDashoffset = offset; let color = result.score >= 70 ? '#28a745' : (result.score >= 50 ? '#ffc107' : '#dc3545'); circle.style.stroke = color; }
+                document.getElementById('atsScoreText').textContent = result.score;
+                const badge = document.getElementById('atsRatingBadge');
+                if (badge) { badge.innerText = result.rating; let bgColor = result.score >= 70 ? '#28a745' : (result.score >= 50 ? '#ffc107' : '#dc3545'); badge.style.background = bgColor; badge.style.color = result.score >= 50 ? '#333' : 'white'; }
+                document.getElementById('atsRatingMessage').innerHTML = result.rating_message;
+                document.getElementById('statWords').innerHTML = result.word_count;
+                document.getElementById('statSkills').innerHTML = result.skills_count;
+                document.getElementById('statVerbs').innerHTML = result.action_verbs;
+                document.getElementById('statSections').innerHTML = result.sections_found;
+                let detailedHtml = `<div style="background: #d4edda; padding: 15px; border-radius: 12px; margin-bottom: 15px;"><h4 style="color: #155724;">✅ Strengths</h4><ul>${result.feedback.map(f => `<li>${f}</li>`).join('') || '<li>Good foundation</li>'}</ul></div><div style="background: #fff3e0; padding: 15px; border-radius: 12px; margin-bottom: 15px;"><h4 style="color: #e65100;">💡 Suggestions</h4><ul>${result.suggestions.map(s => `<li>${s}</li>`).join('')}</ul></div>`;
+                if (result.detailed_breakdown) {
+                    const b = result.detailed_breakdown;
+                    detailedHtml += `<div style="background: #e8eaf6; padding: 15px; border-radius: 12px; margin-bottom: 15px;"><h4 style="color: #3f51b5;">📊 Score Breakdown</h4><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px;"><div><small>Technical</small><div style="font-weight:bold;">${Math.round(b.technical_skills?.score || 0)}%</div></div><div><small>Action Verbs</small><div style="font-weight:bold;">${Math.round(b.action_verbs?.score || 0)}%</div></div><div><small>Length</small><div style="font-weight:bold;">${Math.round(b.resume_length?.score || 0)}%</div></div><div><small>Sections</small><div style="font-weight:bold;">${Math.round(b.sections?.score || 0)}%</div></div><div><small>Format</small><div style="font-weight:bold;">${Math.round(b.formatting?.score || 0)}%</div></div></div></div>`;
+                }
+                if (result.keywordsFound && result.keywordsFound.length > 0) {
+                    detailedHtml += `<div style="background: #e3f2fd; padding: 15px; border-radius: 12px;"><h4 style="color: #1565c0;">🔑 Keywords Found (${result.skills_count})</h4><div style="display: flex; flex-wrap: wrap; gap: 8px;">${result.keywordsFound.map(k => `<span style="background: #bbdefb; padding: 5px 14px; border-radius: 25px; font-size: 12px;">${escapeHtmlForATS(k)}</span>`).join('')}</div></div>`;
+                }
+                document.getElementById('atsDetailedResults').innerHTML = detailedHtml;
+                document.getElementById('atsResult').style.display = 'block';
+                status.style.display = 'none';
+                localStorage.setItem('lastATSScore', result.score);
+            } catch (error) { status.className = 'status error'; status.innerHTML = '❌ Error: ' + error.message; }
+        });
+        function escapeHtmlForATS(text) { if (!text) return ''; const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+
+        // ============ PAGE NAVIGATION ==========
+        function showPage(pageName) {
+            document.querySelectorAll('.page-container').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageName + 'Page').classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            const activeNav = document.querySelector(`.nav-item[data-page="${pageName}"]`);
+            if (activeNav) activeNav.classList.add('active');
+            trackPageView(pageName);
+            if (pageName === 'ats') {
+                document.getElementById('atsResult').style.display = 'none';
+                document.getElementById('atsStatus').style.display = 'block';
+                document.getElementById('atsStatus').className = 'status info';
+                document.getElementById('atsStatus').innerHTML = '📄 Upload your resume (PDF, TXT, or MD) to get an accurate ATS score analysis.';
+            }
+        }
+        
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+        
+        // Initialize
+        renderSkills(); renderEducation(); renderProjects(); renderCertifications(); renderSoftSkills();
+        showUserLogin();
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</body>
+</html>
